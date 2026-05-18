@@ -54,22 +54,48 @@
       <p style="margin:0;">
         SEPAQ canoe-camping circuit number 61. A 69 km counter-clockwise loop in
         the Chochocouane sector of Réserve faunique La Vérendrye, with 21 portages
-        (longest is 575 m) and a single put-in and take-out near Lac Rousine. The
-        route line below is hand-traced from the SEPAQ topo. The real GPS track
-        will replace it once Stan's inReach logs the actual paddled line.
+        (longest is 575 m) and a single put-in and take-out near Lac Rousine.
       </p>
     </div>
   </div>
 
+  <!-- Official SEPAQ map -->
   <div class="container">
+    <figure class="sepaq-map">
+      <a href="assets/img/sepaq-map-loop-61.jpg" target="_blank" rel="noopener" title="Open full-size">
+        <img src="assets/img/sepaq-map-loop-61.jpg"
+             alt="Official SEPAQ map of the Petite boucle Chochocouane n° 61, showing the route, portages, campsites, and kilometre markers."
+             loading="lazy">
+      </a>
+      <figcaption>
+        Official SEPAQ topographic map for circuit n° 61. The red dashed line is
+        the paddling route, magenta is portages, numbered yellow tags are the
+        wilderness campsites (e.g. 61-08, 60-73). Kilometre markers run around the
+        loop in white circles. Click to open full size.
+        Source: <a href="https://www.sepaq.com/rf/lvy/canot-camping/index.dot" target="_blank" rel="noopener">SEPAQ canoe-camping page</a>, April 2026 edition.
+      </figcaption>
+    </figure>
+  </div>
+
+  <!-- Interactive context map -->
+  <div class="container">
+    <h3 style="margin-top:3rem;">Pan and zoom</h3>
+    <p style="color:rgba(28,28,28,0.7); margin-bottom:1.5rem;">
+      The same SEPAQ map, overlaid on OpenStreetMap and aligned to the real
+      geographic coordinates. Use the layer control (top right) to toggle the
+      SEPAQ overlay on and off and see how the loop sits in the wider reserve.
+      The georeferencing was extracted from the SEPAQ GeoPDF with GDAL, so the
+      route lines, portages, campsite numbers and kilometre markers are
+      pixel-accurate on the base map.
+    </p>
+
     <div id="map"></div>
 
-    <div class="map-legend">
-      <span><i class="route"></i> Paddling route</span>
-      <span><i></i> Put-in &amp; take-out</span>
-      <span><i class="camp"></i> Campsite</span>
-      <span><i class="portage"></i> Portage</span>
-    </div>
+    <p style="font-size:0.85rem; color:rgba(28,28,28,0.55); margin-top:0.75rem;">
+      Red star marks the approximate put-in at Lac Rousine. Stan's Garmin inReach
+      will publish the actual paddled GPS track on the
+      <a href="tracking.html">tracking page</a> once we're on the water.
+    </p>
   </div>
 </section>
 

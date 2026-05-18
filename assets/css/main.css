@@ -387,6 +387,27 @@ font[style*="background"] { background: transparent !important; }
   background: #d8e6e3;
 }
 
+/* Official SEPAQ map figure */
+.sepaq-map {
+  margin: 0;
+  padding: 0;
+}
+.sepaq-map img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: #fff;
+  display: block;
+}
+.sepaq-map figcaption {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: rgba(28, 28, 28, 0.6);
+  line-height: 1.5;
+}
+.sepaq-map figcaption a { color: var(--canoe-red-dark); }
+
 .map-legend {
   display: flex;
   flex-wrap: wrap;
