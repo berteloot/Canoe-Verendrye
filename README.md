@@ -30,7 +30,7 @@ comments form.
 ├── equipment.html       Full gear list grouped by function
 ├── preparation.html     How we planned, trained, packed
 ├── journal.html         Photo/blog post grid (placeholders)
-├── tracking.html        Garmin Enrich embed + comments form
+├── tracking.html        Garmin MapShare embed + comments form
 ├── assets/
 │   ├── css/main.css     Brand palette + all styles
 │   └── js/
@@ -74,16 +74,16 @@ That's it. The `netlify.toml` in the root handles the rest.
 ## Wiring the live tracker
 
 The tracking page (`tracking.html`) ships with a placeholder. To embed
-your real Garmin Enrich "Share My Map":
+your real Garmin MapShare:
 
-1. In Garmin Explore (web), enable **Share My Map** on the inReach device.
-2. Copy the share URL — looks like `https://share.garmin.com/share/<your-handle>`.
+1. In Garmin Explore (web), enable **MapShare** on the inReach device.
+2. Copy the share URL, looks like `https://share.garmin.com/share/<your-handle>`.
 3. Open [tracking.html](tracking.html), find the comment block inside
    `<div id="tracker-embed">`, and replace the placeholder with:
 
 ```html
 <iframe
-  title="Garmin Enrich Share My Map"
+  title="Garmin MapShare"
   src="https://share.garmin.com/share/YOUR-USER"
   allowfullscreen
   loading="lazy"></iframe>
@@ -153,7 +153,7 @@ each page's `<head>`.
 ## TODO before launch
 
 - [ ] Replace placeholder route in `assets/js/map.js` with the real GPX.
-- [ ] Wire the Garmin Enrich iframe in `tracking.html`.
+- [ ] Wire the Garmin MapShare iframe in `tracking.html`.
 - [ ] Swap journal placeholder covers for real photos.
 - [ ] Add the Cloudflare Turnstile site key to `tracking.html` (and the
       Netlify Function for server-side verification).
