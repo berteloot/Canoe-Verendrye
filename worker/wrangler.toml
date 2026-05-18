@@ -1,0 +1,15 @@
+name = "canoe-comments"
+main = "index.js"
+compatibility_date = "2026-05-01"
+account_id = "03a83d331672a330ee985b6f3636b24c"
+
+[vars]
+ALLOWED_ORIGIN = "https://canoe-verendrye.berteloot.org"
+MAIL_TO = "stan@berteloot.org"
+MAIL_FROM = "Canoe Comments <onboarding@resend.dev>"
+
+# Secrets (set via `wrangler secret put`):
+#   TURNSTILE_SECRET
+#   RESEND_API_KEY
+
+# Bound to a route on the berteloot.org zone (see deploy script).
