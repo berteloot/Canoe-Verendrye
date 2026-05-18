@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live Tracking · The Red Canoe</title>
+  <meta name="description" content="Follow the La Vérendrye canoe expedition live via Garmin inReach Enrich, and leave a note for the crew.">
+  <meta name="theme-color" content="#1E3A2B">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
+
+  <!-- Cloudflare Turnstile — uncomment when you've added your site key below -->
+  <!-- <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script> -->
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav__inner">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 64 32" aria-hidden="true">
+        <path d="M2 14 C 10 26, 54 26, 62 14 L 56 14 C 50 20, 14 20, 8 14 Z" fill="#C8392E"/>
+        <path d="M32 4 L 32 14" stroke="#3a2a1a" stroke-width="1.4"/>
+        <ellipse cx="32" cy="4" rx="2.5" ry="1" fill="#3a2a1a"/>
+      </svg>
+      <span class="brand__name">The Red Canoe<span class="brand__tag">Violette &amp; Stan · 2026</span></span>
+    </a>
+    <div class="lang-toggle" role="group" aria-label="Language" translate="no">
+      <button type="button" data-lang="en">EN</button>
+      <button type="button" data-lang="fr">FR</button>
+    </div>
+
+    <button class="nav__toggle" aria-label="Menu" aria-expanded="false">☰</button>
+    <nav class="nav__links">
+      <a href="index.html">Home</a>
+      <a href="itinerary.html">Route &amp; Map</a>
+      <a href="equipment.html">Equipment</a>
+      <a href="preparation.html">Preparation</a>
+      <a href="journal.html">Journal</a>
+      <a href="tracking.html">Live Tracking</a>
+    </nav>
+  </div>
+</header>
+
+<section>
+  <div class="container container--text">
+    <div class="section-head" style="text-align:left;">
+      <h4>Follow Along</h4>
+      <h2>Where Violette, Stan, and Charlie are, right now.</h2>
+      <p style="margin:0;">
+        During the trip (Jun 17–21, 2026), Stan's Garmin inReach Mini 2 pings a position
+        every 10 minutes along the <em>Petite boucle Chochocouane n° 61</em>. The map
+        below is the live embed from Garmin Enrich's <strong>Share My Map</strong>
+        feature, showing our route in near-real-time. Refresh the page for the latest
+        position.
+      </p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="tracker">
+      <div class="tracker__embed" id="tracker-embed">
+        <!--
+          Drop the Garmin Enrich "Share My Map" embed iframe here.
+          Replace the placeholder below with:
+
+          <iframe
+            title="Garmin Enrich Share My Map"
+            src="https://share.garmin.com/share/YOUR-USER"
+            allowfullscreen
+            loading="lazy"></iframe>
+
+          The placeholder box is shown until the iframe is added.
+        -->
+        <div class="tracker__placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-7.5 8-13a8 8 0 1 0 -16 0c0 5.5 8 13 8 13Z"/><circle cx="12" cy="9" r="3"/></svg>
+          <p><strong>Tracker goes live June 17, 2026.</strong></p>
+          <p>This panel will embed our Garmin Enrich "Share My Map" feed as soon as we paddle off from the put-in at Lac Rousine.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <h4>How to read the map</h4>
+      <p>
+        Red dots are GPS pings, every 10 minutes when moving and every 60 minutes at
+        camp. The line between them is interpolated. We don't actually paddle in
+        straight lines. If a ping is missing for more than 4 hours, we've likely lost
+        satellite line-of-sight under tree cover. That's not a cause for concern unless
+        it stretches past 12 hours.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== COMMENTS ===================== -->
+<section style="background:var(--birch); padding-top:3rem;" id="comments">
+  <div class="container container--text">
+    <div class="section-head" style="text-align:left;">
+      <h4>Leave a note</h4>
+      <h2>Send us a message from civilization.</h2>
+      <p style="margin:0;">
+        We can't read these while we're on the water. We'll read every one of them
+        when we're back in cell range on June 21. Encouragement, weather rumours, dog
+        photos, all welcome.
+      </p>
+    </div>
+
+    <!--
+      Netlify form:
+      - data-netlify="true" tells Netlify to capture submissions automatically.
+      - netlify-honeypot adds a hidden field bots fill in; submissions are silently dropped.
+      - Form submissions appear in your Netlify dashboard under Forms.
+
+      Add Cloudflare Turnstile later:
+      1. Uncomment the <script> tag in <head>.
+      2. Add: <div class="cf-turnstile" data-sitekey="YOUR_SITE_KEY"></div>
+         inside the form, just before the submit button.
+      3. Verify the cf-turnstile-response token in a Netlify Function before storing.
+    -->
+    <form
+      id="comments-form"
+      class="comments__form"
+      name="canoe-comments"
+      method="POST"
+      data-netlify="true"
+      netlify-honeypot="bot-field"
+    >
+      <p style="display:none;"><label>Don't fill this out: <input name="bot-field"></label></p>
+      <input type="hidden" name="form-name" value="canoe-comments">
+
+      <div>
+        <label for="c-name">Your name</label>
+        <input id="c-name" name="name" type="text" maxlength="60" required autocomplete="name">
+      </div>
+
+      <div>
+        <label for="c-message">Your message</label>
+        <textarea id="c-message" name="message" maxlength="800" required placeholder="Paddle safe! Sending good wind from..."></textarea>
+      </div>
+
+      <!-- Cloudflare Turnstile slot (enable when ready) -->
+      <!-- <div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITE_KEY"></div> -->
+
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+        <p class="comments__note">
+          <strong>Note:</strong> comments are moderated before they appear on the page. Spam protection by Cloudflare Turnstile (coming soon).
+        </p>
+        <button class="btn" type="submit">Send →</button>
+      </div>
+    </form>
+
+    <div id="comments-list" class="comments__list" aria-live="polite"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer__inner">
+    <div class="footer__brand">
+      <svg viewBox="0 0 64 32" aria-hidden="true"><path d="M2 14 C 10 26, 54 26, 62 14 L 56 14 C 50 20, 14 20, 8 14 Z" fill="#C8392E"/></svg>
+      <span>The Red Canoe · La Vérendrye 2026</span>
+    </div>
+    <div><a href="tracking.html">Live tracking</a> · <a href="tracking.html#comments">Leave a note</a></div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+<script src="assets/js/comments.js"></script>
+<div id="google_translate_element" aria-hidden="true"></div>
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
+</body>
+</html>

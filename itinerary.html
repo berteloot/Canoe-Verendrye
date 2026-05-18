@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Route &amp; Map · The Red Canoe</title>
+  <meta name="description" content="The day-by-day route through Réserve faunique La Vérendrye with an interactive map.">
+  <meta name="theme-color" content="#1E3A2B">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin="">
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav__inner">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 64 32" aria-hidden="true">
+        <path d="M2 14 C 10 26, 54 26, 62 14 L 56 14 C 50 20, 14 20, 8 14 Z" fill="#C8392E"/>
+        <path d="M32 4 L 32 14" stroke="#3a2a1a" stroke-width="1.4"/>
+        <ellipse cx="32" cy="4" rx="2.5" ry="1" fill="#3a2a1a"/>
+      </svg>
+      <span class="brand__name">The Red Canoe<span class="brand__tag">Violette &amp; Stan · 2026</span></span>
+    </a>
+    <div class="lang-toggle" role="group" aria-label="Language" translate="no">
+      <button type="button" data-lang="en">EN</button>
+      <button type="button" data-lang="fr">FR</button>
+    </div>
+
+    <button class="nav__toggle" aria-label="Menu" aria-expanded="false">☰</button>
+    <nav class="nav__links">
+      <a href="index.html">Home</a>
+      <a href="itinerary.html">Route &amp; Map</a>
+      <a href="equipment.html">Equipment</a>
+      <a href="preparation.html">Preparation</a>
+      <a href="journal.html">Journal</a>
+      <a href="tracking.html">Live Tracking</a>
+    </nav>
+  </div>
+</header>
+
+<section>
+  <div class="container container--text">
+    <div class="section-head" style="text-align:left;">
+      <h4>The Route</h4>
+      <h2>Petite boucle Chochocouane n° 61.</h2>
+      <p style="margin:0;">
+        SEPAQ canoe-camping circuit number 61. A 69 km counter-clockwise loop in
+        the Chochocouane sector of Réserve faunique La Vérendrye, with 21 portages
+        (longest is 575 m) and a single put-in and take-out near Lac Rousine. The
+        route line below is hand-traced from the SEPAQ topo. The real GPS track
+        will replace it once Stan's inReach logs the actual paddled line.
+      </p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="map"></div>
+
+    <div class="map-legend">
+      <span><i class="route"></i> Paddling route</span>
+      <span><i></i> Put-in &amp; take-out</span>
+      <span><i class="camp"></i> Campsite</span>
+      <span><i class="portage"></i> Portage</span>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container container--text">
+    <h2>Day by day</h2>
+
+    <div class="days">
+      <article class="day">
+        <div class="day__no">1<small>Jun 17</small></div>
+        <div>
+          <h3>Put-in (Lac Rousine) → Lac Rivard</h3>
+          <div class="day__meta">
+            <span>~14 km paddled</span><span>P110 m + P480 m + 3 short</span><span>Camp: site 61-08</span>
+          </div>
+          <p>The second-longest portage of the trip hits on day one, while shoulders
+          are fresh. We carry over the 110 m put-in to Lac Rousine, paddle north through
+          Lac Linard and Lac Obreck, then haul gear up the 480 m climb north of Lac Bivard.
+          Camp on Lac Rivard. A swim is possible if the water has had time to warm. It
+          probably hasn't.</p>
+        </div>
+      </article>
+
+      <article class="day">
+        <div class="day__no">2<small>Jun 18</small></div>
+        <div>
+          <h3>Lac Rivard → Lac Laspron</h3>
+          <div class="day__meta">
+            <span>~13 km paddled</span><span>P340 m + P175 m + small river sections</span><span>Camp: site 63-03</span>
+          </div>
+          <p>The north reach of the loop, through Lac Gladu, Lac Bastude, and Lac Laspron.
+          Wider water and longer sight-lines than day one. The plan is to be off the big lake
+          by 11:00 to dodge the afternoon wind. Camp on Lac Laspron with a view back across
+          the chain we just paddled.</p>
+        </div>
+      </article>
+
+      <article class="day">
+        <div class="day__no">3<small>Jun 19</small></div>
+        <div>
+          <h3>Lac Laspron → Lac Quenza (via Rivière Denain)</h3>
+          <div class="day__meta">
+            <span>~16 km paddled</span><span>P575 m + P290 m + R3 rapids</span><span>Camp: site 60-73</span>
+          </div>
+          <p>The crux day. South through Lac Discal and Lac Sayon, then the 575 m
+          portage on Rivière Denain. It's the longest portage of the trip, with R3 rapids
+          on either end that we will walk rather than run with a loaded canoe. Two trips
+          for the gear, one for the canoe overhead. We start at first light to keep the
+          afternoon open in case anything slows us down.</p>
+        </div>
+      </article>
+
+      <article class="day">
+        <div class="day__no">4<small>Jun 20</small></div>
+        <div>
+          <h3>Lac Quenza → Lac Lavis</h3>
+          <div class="day__meta">
+            <span>~14 km paddled</span><span>P340 m + P230 m + P150 m</span><span>Camp: site 60-76</span>
+          </div>
+          <p>South through Lac Padozel and Lac Boisrault, then west along Lac Ferrade and
+          Lac Salival. A string of mid-length portages, none brutal individually, but they
+          add up after three big days. Last night on the water. Bonfire and the rest of
+          the whisky.</p>
+        </div>
+      </article>
+
+      <article class="day">
+        <div class="day__no">5<small>Jun 21</small></div>
+        <div>
+          <h3>Lac Lavis → take-out, on the summer solstice</h3>
+          <div class="day__meta">
+            <span>~12 km paddled</span><span>P145 m + P75 m + take-out</span><span>Take-out by 16:00</span>
+          </div>
+          <p>Final stretch back via Lac Suzie and Lac Halloy to the put-in. The longest
+          day of the year, finished in a parking lot, then a drive south to the first cell
+          signal in five days and somewhere we can order a burger that doesn't need
+          rehydrating.</p>
+        </div>
+      </article>
+    </div>
+
+    <div class="callout">
+      <h4>SEPAQ map &amp; permits</h4>
+      <p>The official SEPAQ topo for this circuit is the
+      <em>Petite boucle Chochocouane n° 61</em>, available from the
+      <a href="https://www.sepaq.com/rf/lvy/canot-camping/index.dot" target="_blank" rel="noopener">Réserve faunique La Vérendrye canoe-camping page</a>.
+      Site numbers above (61-08, 63-03, 60-73 …) match the SEPAQ reservation system.
+      We'll publish the real GPX track from Stan's inReach once we're home.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer__inner">
+    <div class="footer__brand">
+      <svg viewBox="0 0 64 32" aria-hidden="true"><path d="M2 14 C 10 26, 54 26, 62 14 L 56 14 C 50 20, 14 20, 8 14 Z" fill="#C8392E"/></svg>
+      <span>The Red Canoe · La Vérendrye 2026</span>
+    </div>
+    <div><a href="tracking.html">Live tracking</a> · <a href="tracking.html#comments">Leave a note</a></div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/map.js"></script>
+<div id="google_translate_element" aria-hidden="true"></div>
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
+</body>
+</html>
