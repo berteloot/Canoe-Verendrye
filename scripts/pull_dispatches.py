@@ -1,0 +1,235 @@
+#!/usr/bin/env python3
+"""Poll Pierre's AgentMail inbox for inReach dispatches, publish to journal.
+
+Runs on AWS Lightsail (Pierre) on a cron:
+
+    */5 * * * *  cd /opt/Canoe-Verendrye && /usr/bin/python3 scripts/pull_dispatches.py
+
+What it does:
+  1. Calls AgentMail v0 API, lists messages received since the last cursor.
+  2. Keeps only messages that match an inReach pattern (sender domain or
+     a manual "DISPATCH:" tag in the subject).
+  3. Parses each: strips Garmin signature, extracts lat/lon, normalizes
+     the body. Writes journal-entries/YYYYMMDDTHHMMZ.json.
+  4. Runs scripts/render-journal.py to update journal.html.
+  5. If anything changed: git add + commit + push. Render auto-deploys.
+  6. Marks messages as read in AgentMail so they aren't re-processed.
+  7. Persists cursor in .pierre-cursor (gitignored).
+
+Env vars required (read from process env, set in Lightsail systemd unit
+or cron `EnvironmentFile=`):
+  AGENTMAIL_API_KEY
+  AGENTMAIL_PIERRE_INBOX_ID   (defaults to pierre@agentmail.to)
+
+Optional:
+  CANOE_AUTOCOMMIT=1          Set to 0 to dry-run (parse + render but no push)
+  CANOE_GIT_USER_NAME, _EMAIL Author for the commits
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+import urllib.request
+import urllib.error
+
+ROOT = Path(__file__).resolve().parent.parent
+ENTRIES = ROOT / "journal-entries"
+CURSOR_FILE = ROOT / ".pierre-cursor"
+RENDER_SCRIPT = ROOT / "scripts" / "render-journal.py"
+
+AGENTMAIL_BASE = "https://api.agentmail.to/v0"
+INREACH_SENDER_PATTERNS = (
+    "no.reply@garmin.com",
+    "@garmin.com",
+)
+DISPATCH_TAG_RE = re.compile(r"^DISPATCH:\s*", re.IGNORECASE)
+GARMIN_LATLON_RE = re.compile(
+    r"Lat\s+(-?\d+\.\d+)\s*[,\s]\s*Lon\s+(-?\d+\.\d+)",
+    re.IGNORECASE,
+)
+GARMIN_SIG_RE = re.compile(
+    r"\n+(?:Sent|.* sent this message) from.*$", re.IGNORECASE | re.DOTALL
+)
+
+
+def env(name: str, default: str | None = None) -> str | None:
+    v = os.environ.get(name)
+    return v if v else default
+
+
+def api(method: str, path: str, body: dict | None = None) -> dict:
+    url = f"{AGENTMAIL_BASE}{path}"
+    data = json.dumps(body).encode() if body is not None else None
+    headers = {
+        "Authorization": f"Bearer {env('AGENTMAIL_API_KEY')}",
+        "Content-Type": "application/json",
+    }
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            raw = resp.read()
+            return json.loads(raw) if raw else {}
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", "replace")[:300]
+        raise SystemExit(f"AgentMail {method} {path} → {e.code} {body}")
+
+
+def list_messages(inbox: str, after_cursor: str | None) -> list[dict]:
+    qs = "?limit=50"
+    if after_cursor:
+        qs += f"&after={urllib.request.quote(after_cursor)}"
+    data = api("GET", f"/inboxes/{inbox}/messages{qs}")
+    # AgentMail returns either a list directly or {"data": [...]}, normalize.
+    return data.get("data", data) if isinstance(data, dict) else data
+
+
+def get_message(inbox: str, mid: str) -> dict:
+    return api("GET", f"/inboxes/{inbox}/messages/{mid}")
+
+
+def mark_read(inbox: str, mid: str) -> None:
+    # Idempotent. Ignore failures — re-runs will just match patterns again.
+    try:
+        api("POST", f"/inboxes/{inbox}/messages/{mid}/read", body={})
+    except Exception:
+        pass
+
+
+def is_dispatch(msg: dict) -> bool:
+    sender = (msg.get("from") or msg.get("from_email") or "").lower()
+    subject = (msg.get("subject") or "")
+    if any(p in sender for p in INREACH_SENDER_PATTERNS):
+        return True
+    if DISPATCH_TAG_RE.match(subject):
+        return True
+    return False
+
+
+def parse(msg: dict) -> dict | None:
+    body = (msg.get("text") or msg.get("body_text") or msg.get("body") or "").strip()
+    if not body:
+        return None
+    lat_lon = GARMIN_LATLON_RE.search(body)
+    body_clean = GARMIN_SIG_RE.sub("", body).strip()
+    body_clean = DISPATCH_TAG_RE.sub("", body_clean).strip()
+    if not body_clean:
+        return None
+    received_iso = msg.get("received_at") or msg.get("date") or datetime.now(timezone.utc).isoformat()
+    try:
+        dt = datetime.fromisoformat(received_iso.replace("Z", "+00:00"))
+    except Exception:
+        dt = datetime.now(timezone.utc)
+    eid = dt.astimezone(timezone.utc).strftime("%Y%m%dT%H%MZ")
+    entry = {
+        "id": eid,
+        "received_at": dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "body": body_clean,
+        "source": "inreach",
+        "raw_message_id": msg.get("id") or msg.get("message_id") or "",
+    }
+    if lat_lon:
+        entry["lat"] = float(lat_lon.group(1))
+        entry["lon"] = float(lat_lon.group(2))
+    return entry
+
+
+def write_entry(entry: dict) -> Path:
+    ENTRIES.mkdir(exist_ok=True)
+    path = ENTRIES / f"{entry['id']}.json"
+    path.write_text(json.dumps(entry, indent=2, ensure_ascii=False) + "\n")
+    return path
+
+
+def run_render() -> bool:
+    """Returns True if journal.html changed."""
+    before = (ROOT / "journal.html").read_text()
+    subprocess.run([sys.executable, str(RENDER_SCRIPT)], cwd=ROOT, check=True)
+    after = (ROOT / "journal.html").read_text()
+    return before != after
+
+
+def git(*args: str) -> str:
+    res = subprocess.run(
+        ["git", *args], cwd=ROOT, capture_output=True, text=True, check=True
+    )
+    return res.stdout.strip()
+
+
+def commit_and_push(new_paths: list[Path]) -> None:
+    if env("CANOE_AUTOCOMMIT", "1") != "1":
+        print("CANOE_AUTOCOMMIT=0, skipping commit/push")
+        return
+    name = env("CANOE_GIT_USER_NAME", "Pierre Dumont")
+    email = env("CANOE_GIT_USER_EMAIL", "pierre@agentmail.to")
+    git("config", "user.name", name)
+    git("config", "user.email", email)
+    files = [str(p.relative_to(ROOT)) for p in new_paths] + ["journal.html"]
+    git("add", *files)
+    if not git("status", "--short"):
+        return
+    n = len(new_paths)
+    git("commit", "-m", f"Pierre: {n} new dispatch{'es' if n != 1 else ''} from the trail")
+    git("push", "origin", "HEAD:main")
+
+
+def load_cursor() -> str | None:
+    if CURSOR_FILE.exists():
+        return CURSOR_FILE.read_text().strip() or None
+    return None
+
+
+def save_cursor(value: str) -> None:
+    CURSOR_FILE.write_text(value + "\n")
+
+
+def main() -> int:
+    if not env("AGENTMAIL_API_KEY"):
+        raise SystemExit("AGENTMAIL_API_KEY not set")
+    inbox = env("AGENTMAIL_PIERRE_INBOX_ID", "pierre@agentmail.to")
+
+    cursor = load_cursor()
+    msgs = list_messages(inbox, cursor)
+    if not msgs:
+        print("no new messages")
+        return 0
+
+    new_paths: list[Path] = []
+    last_id = cursor
+    for m in msgs:
+        last_id = m.get("id") or m.get("message_id") or last_id
+        if not is_dispatch(m):
+            continue
+        # If list view didn't include body, fetch full message.
+        if not (m.get("text") or m.get("body_text") or m.get("body")):
+            m = get_message(inbox, m.get("id") or m.get("message_id"))
+        entry = parse(m)
+        if not entry:
+            continue
+        path = write_entry(entry)
+        new_paths.append(path)
+        mark_read(inbox, entry["raw_message_id"])
+        print(f"wrote {path.name}: {entry['body'][:60]}…")
+
+    if last_id:
+        save_cursor(last_id)
+    if not new_paths:
+        print("no dispatches in this batch")
+        return 0
+
+    changed = run_render()
+    if changed:
+        commit_and_push(new_paths)
+        print(f"published {len(new_paths)} dispatch(es)")
+    else:
+        print("render produced no diff (already up to date)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

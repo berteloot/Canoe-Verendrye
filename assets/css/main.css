@@ -554,6 +554,59 @@ font[style*="background"] { background: transparent !important; }
 .post h3 { margin-bottom: 0.5rem; }
 .post p { color: rgba(28,28,28,0.7); font-size: 0.95rem; margin: 0; }
 
+/* ---------- Live dispatches (inReach -> Pierre -> journal) ---------- */
+
+.dispatches-wrap {
+  margin: 0 0 3rem 0;
+  padding: 1.5rem 1.75rem;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--canoe-red);
+  border-radius: 4px;
+}
+.dispatches__title {
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  margin: 0 0 1rem 0;
+}
+.dispatches__empty {
+  color: rgba(28,28,28,0.55);
+  font-style: italic;
+  margin: 0;
+}
+.dispatches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.dispatch {
+  padding: 1rem 0;
+  border-top: 1px dashed var(--rule);
+}
+.dispatch:first-child { border-top: none; padding-top: 0.25rem; }
+.dispatch__date {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--canoe-red-dark);
+  margin-bottom: 0.35rem;
+}
+.dispatch__body {
+  margin: 0;
+  font-size: 1rem;
+  white-space: pre-wrap;
+}
+.dispatch__loc {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: rgba(28,28,28,0.6);
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(28,28,28,0.3);
+}
+.dispatch__loc:hover { color: var(--canoe-red-dark); }
+
 /* ---------- Tracking + comments ---------- */
 
 .tracker {
