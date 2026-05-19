@@ -24,11 +24,16 @@ Pierre's polling loop. Pulls new messages from `pierre@agentmail.to`,
 filters to inReach dispatches, writes a JSON entry per message, runs
 the renderer, then `git commit && git push`. Render auto-deploys.
 
-Designed to run on **AWS Lightsail** under cron:
+Designed to run on **AWS Lightsail** under cron, every 2 hours during the trip:
 
 ```cron
-*/5 * * * *  cd /opt/Canoe-Verendrye && /usr/bin/python3 scripts/pull_dispatches.py >> /var/log/canoe-pierre.log 2>&1
+0 */2 * * *  cd /opt/Canoe-Verendrye && /usr/bin/python3 scripts/pull_dispatches.py >> /var/log/canoe-pierre.log 2>&1
 ```
+
+Polling more often does not cost anything: AgentMail's inbound is free,
+and the Lightsail box is a flat monthly bill. The cost is on the inReach
+side and depends on how many messages you *send*, not on how often Pierre
+polls. Every 2 hours is plenty for a trail journal.
 
 ### Env vars
 
