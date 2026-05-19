@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Poll Pierre's AgentMail inbox for inReach dispatches, publish to journal.
 
-Runs on AWS Lightsail (Pierre) on a cron:
+Runs on AWS Lightsail (Pierre) on a cron, every 2 hours during the trip:
 
-    */5 * * * *  cd /opt/Canoe-Verendrye && /usr/bin/python3 scripts/pull_dispatches.py
+    0 */2 * * *  cd /opt/Canoe-Verendrye && /usr/bin/python3 scripts/pull_dispatches.py
 
 What it does:
   1. Calls AgentMail v0 API, lists messages received since the last cursor.
