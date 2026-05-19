@@ -49,6 +49,7 @@ INREACH_SENDER_PATTERNS = (
     "@garmin.com",
 )
 DISPATCH_TAG_RE = re.compile(r"^DISPATCH:\s*", re.IGNORECASE)
+INREACH_SUBJECT_RE = re.compile(r"inReach message from", re.IGNORECASE)
 GARMIN_LATLON_RE = re.compile(
     r"Lat\s+(-?\d+\.\d+)\s*[,\s]\s*Lon\s+(-?\d+\.\d+)",
     re.IGNORECASE,
@@ -85,20 +86,14 @@ def list_messages(inbox: str, after_cursor: str | None) -> list[dict]:
     if after_cursor:
         qs += f"&after={urllib.request.quote(after_cursor)}"
     data = api("GET", f"/inboxes/{inbox}/messages{qs}")
-    # AgentMail returns either a list directly or {"data": [...]}, normalize.
-    return data.get("data", data) if isinstance(data, dict) else data
+    # AgentMail v0 returns {"messages": [...], "count": N, ...}
+    if isinstance(data, dict):
+        return data.get("messages") or data.get("data") or []
+    return data or []
 
 
 def get_message(inbox: str, mid: str) -> dict:
-    return api("GET", f"/inboxes/{inbox}/messages/{mid}")
-
-
-def mark_read(inbox: str, mid: str) -> None:
-    # Idempotent. Ignore failures — re-runs will just match patterns again.
-    try:
-        api("POST", f"/inboxes/{inbox}/messages/{mid}/read", body={})
-    except Exception:
-        pass
+    return api("GET", f"/inboxes/{inbox}/messages/{urllib.request.quote(mid, safe='')}")
 
 
 def is_dispatch(msg: dict) -> bool:
@@ -108,11 +103,13 @@ def is_dispatch(msg: dict) -> bool:
         return True
     if DISPATCH_TAG_RE.match(subject):
         return True
+    if INREACH_SUBJECT_RE.search(subject):
+        return True
     return False
 
 
 def parse(msg: dict) -> dict | None:
-    body = (msg.get("text") or msg.get("body_text") or msg.get("body") or "").strip()
+    body = (msg.get("text") or msg.get("body_text") or msg.get("body") or msg.get("preview") or "").strip()
     if not body:
         return None
     lat_lon = GARMIN_LATLON_RE.search(body)
@@ -120,7 +117,12 @@ def parse(msg: dict) -> dict | None:
     body_clean = DISPATCH_TAG_RE.sub("", body_clean).strip()
     if not body_clean:
         return None
-    received_iso = msg.get("received_at") or msg.get("date") or datetime.now(timezone.utc).isoformat()
+    received_iso = (
+        msg.get("timestamp")
+        or msg.get("received_at")
+        or msg.get("date")
+        or datetime.now(timezone.utc).isoformat()
+    )
     try:
         dt = datetime.fromisoformat(received_iso.replace("Z", "+00:00"))
     except Exception:
@@ -131,7 +133,7 @@ def parse(msg: dict) -> dict | None:
         "received_at": dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
         "body": body_clean,
         "source": "inreach",
-        "raw_message_id": msg.get("id") or msg.get("message_id") or "",
+        "raw_message_id": msg.get("message_id") or msg.get("id") or "",
     }
     if lat_lon:
         entry["lat"] = float(lat_lon.group(1))
@@ -202,18 +204,26 @@ def main() -> int:
     new_paths: list[Path] = []
     last_id = cursor
     for m in msgs:
-        last_id = m.get("id") or m.get("message_id") or last_id
+        last_id = m.get("message_id") or m.get("id") or last_id
         if not is_dispatch(m):
             continue
-        # If list view didn't include body, fetch full message.
+        # If list view didn't include full body, fetch the full message.
         if not (m.get("text") or m.get("body_text") or m.get("body")):
-            m = get_message(inbox, m.get("id") or m.get("message_id"))
+            full = get_message(inbox, m.get("message_id") or m.get("id"))
+            # Preserve list-level fields the full message might lack
+            for k in ("from", "subject", "timestamp"):
+                if k in m and k not in full:
+                    full[k] = m[k]
+            m = full
         entry = parse(m)
         if not entry:
             continue
+        # Skip if we already wrote this entry (same minute = same id)
+        if (ENTRIES / f"{entry['id']}.json").exists():
+            print(f"skip {entry['id']}: already published")
+            continue
         path = write_entry(entry)
         new_paths.append(path)
-        mark_read(inbox, entry["raw_message_id"])
         print(f"wrote {path.name}: {entry['body'][:60]}…")
 
     if last_id:
