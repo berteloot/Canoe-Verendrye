@@ -99,6 +99,9 @@ export default {
     if (!message || message.length > 800) {
       return jsonResponse({ ok: false, error: "invalid_message" }, 400, env);
     }
+    if (!garminCode) {
+      return jsonResponse({ ok: false, error: "missing_code" }, 400, env);
+    }
     if (!token) {
       return jsonResponse({ ok: false, error: "missing_captcha" }, 400, env);
     }
@@ -160,37 +163,37 @@ export default {
       return jsonResponse({ ok: false, error: "send_failed" }, 502, env);
     }
 
-    // If the correct code was supplied, forward a short message to the inReach.
-    let garminSent = false;
+    // Verify the secret code, then forward to the Garmin inReach.
     const garminPassword = (env.GARMIN_PASSWORD || "").trim();
     const garminEmail = (env.GARMIN_INREACH_EMAIL || "").trim();
-    // Always delay when a code was submitted — prevents timing-based enumeration.
-    if (garminCode) await new Promise(r => setTimeout(r, GARMIN_DELAY_MS));
-    const codeCorrect = garminCode && garminPassword && garminEmail &&
+    // Always delay before checking — prevents timing-based enumeration.
+    await new Promise(r => setTimeout(r, GARMIN_DELAY_MS));
+    const codeCorrect = garminPassword && garminEmail &&
       await safeMatch(garminCode, garminPassword);
-    if (codeCorrect) {
-      const prefix = `${name}: `;
-      const maxBody = 160 - prefix.length;
-      const garminBody = prefix + message.slice(0, maxBody > 0 ? maxBody : 0);
-      const garminRes = await fetch(RESEND_SEND, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${env.RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: env.MAIL_FROM,
-          to: garminEmail,
-          subject: garminBody,
-          text: garminBody,
-        }),
-      });
-      garminSent = garminRes.ok;
-      if (!garminRes.ok) {
-        console.log("garmin forward error", garminRes.status, await garminRes.text().catch(() => ""));
-      }
+    if (!codeCorrect) {
+      return jsonResponse({ ok: false, error: "invalid_code" }, 403, env);
     }
 
-    return jsonResponse({ ok: true, garmin: garminSent }, 200, env);
+    const prefix = `${name}: `;
+    const maxBody = 160 - prefix.length;
+    const garminBody = prefix + message.slice(0, maxBody > 0 ? maxBody : 0);
+    const garminRes = await fetch(RESEND_SEND, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: env.MAIL_FROM,
+        to: garminEmail,
+        subject: garminBody,
+        text: garminBody,
+      }),
+    });
+    if (!garminRes.ok) {
+      console.log("garmin forward error", garminRes.status, await garminRes.text().catch(() => ""));
+    }
+
+    return jsonResponse({ ok: true, garmin: garminRes.ok }, 200, env);
   },
 };

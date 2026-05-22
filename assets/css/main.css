@@ -754,6 +754,13 @@ font[style*="background"] { background: transparent !important; }
 }
 .comments__note strong { color: var(--canoe-red-dark); }
 
+.comments__alt {
+  margin-top: 1.25rem;
+  font-size: 0.85rem;
+  color: rgba(28,28,28,0.6);
+}
+.comments__alt a { color: inherit; text-decoration: underline; }
+
 .comments__list {
   margin-top: 2rem;
   display: grid;

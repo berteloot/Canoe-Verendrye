@@ -133,18 +133,18 @@
 <section style="background:var(--birch); padding-top:3rem;" id="comments">
   <div class="container container--text">
     <div class="section-head" style="text-align:left;">
-      <h4>Leave a note</h4>
-      <h2>Send us a message from civilization.</h2>
+      <h4>Send a message to the Garmin</h4>
+      <h2>Reach us on the water.</h2>
       <p style="margin:0;">
-        We can't read these while we're on the water. We'll read every one of them
-        when we're back in cell range on June 21. Encouragement, weather rumours, dog
-        photos, all welcome.
+        This form is for friends and family with the secret code. Your message is forwarded
+        directly to our Garmin inReach Mini 3 via satellite, wherever we are on the lake.
       </p>
     </div>
 
     <!--
-      Form posts to the Cloudflare Worker at /api/comments (see worker/index.js).
-      The Worker verifies the Turnstile token and emails Stan via Resend.
+      Form posts to the Cloudflare Worker at comments-api.berteloot.org.
+      The Worker verifies the Turnstile token, checks the secret code,
+      and forwards the message to the Garmin inReach via Resend.
       A honeypot field catches naive bots.
     -->
     <form
@@ -167,19 +167,25 @@
       </div>
 
       <div>
-        <label for="c-garmin-code">Secret code <span style="font-weight:400;color:rgba(28,28,28,0.5);">— optional. If you know it, your message is forwarded directly to the Garmin on the water.</span></label>
-        <input id="c-garmin-code" name="garmin_code" type="password" maxlength="60" autocomplete="off" placeholder="Leave blank if you don't have it">
+        <label for="c-garmin-code">Secret code</label>
+        <input id="c-garmin-code" name="garmin_code" type="password" maxlength="60" required autocomplete="off" placeholder="Required to reach the Garmin">
       </div>
 
       <div class="cf-turnstile" data-sitekey="0x4AAAAAADUDxLtb-NXuVC76" data-theme="light"></div>
 
       <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
-        <p class="comments__note">
-          <strong>Note:</strong> we read these when we're back in cell range on June 21. Spam protection by Cloudflare Turnstile.
+        <p class="comments__note" id="comments-note">
+          <strong>Note:</strong> messages arrive on the Garmin within minutes. 160-character limit. Spam protection by Cloudflare Turnstile.
         </p>
         <button class="btn" type="submit">Send →</button>
       </div>
     </form>
+
+    <p class="comments__alt" id="comments-alt-contact">
+      Don't have the code? Reach Stan at
+      <span class="js-email" data-u="pierre" data-d="nytromarketing.com"></span>
+      — Pierre will pass it along.
+    </p>
 
     <div id="comments-list" class="comments__list" aria-live="polite"></div>
   </div>

@@ -2,9 +2,10 @@
    Comments — frontend behavior
    ------------------------------------------------------------
    Production path:
-     POST to the Cloudflare Worker at /api/comments. The Worker
-     verifies the Turnstile token and sends an email to Stan via
-     Resend. See worker/index.js.
+     POST to the Cloudflare Worker at comments-api.berteloot.org.
+     The Worker verifies the Turnstile token, checks the secret
+     code, and forwards the message to the Garmin inReach.
+     See worker/index.js.
 
    Local preview (file:// or any host that isn't the live site):
      Falls back to localStorage so the UX is still visible.
@@ -17,9 +18,19 @@
 
   const LS_KEY = 'verendrye:comments:demo';
   const ENDPOINT = 'https://comments-api.berteloot.org/';
-  const note = form.querySelector('.comments__note');
+  const note = document.getElementById('comments-note') || form.querySelector('.comments__note');
   const submitBtn = form.querySelector('button[type="submit"]');
   const originalNoteHtml = note ? note.innerHTML : '';
+
+  // Render obfuscated email addresses.
+  document.querySelectorAll('.js-email').forEach(el => {
+    const u = el.dataset.u, d = el.dataset.d;
+    if (!u || !d) return;
+    const a = document.createElement('a');
+    a.href = 'mailto:' + u + '@' + d;
+    a.textContent = u + '@' + d;
+    el.replaceWith(a);
+  });
 
   renderStored();
 
@@ -39,7 +50,7 @@
         at: new Date().toISOString(),
       });
       form.reset();
-      flashNote('<strong>Saved locally (preview mode).</strong> On the live site this posts to Stan.');
+      flashNote('<strong>Saved locally (preview mode).</strong> On the live site this forwards to the Garmin.');
       return;
     }
 
@@ -60,12 +71,11 @@
       if (res.ok && body.ok) {
         form.reset();
         if (window.turnstile) window.turnstile.reset();
-        const msg = body.garmin
-          ? '<strong>Sent — and forwarded to the Garmin.</strong> Stan will read it on the water.'
-          : '<strong>Sent.</strong> Stan reads these when back in cell range on June 21.';
-        flashNote(msg);
+        flashNote('<strong>On its way.</strong> Your message is headed to the Garmin via satellite.');
+      } else if (body.error === 'invalid_code' || body.error === 'missing_code') {
+        flashNote('<strong>Wrong code.</strong> Don\'t have it? Email <a href="mailto:pierre@nytromarketing.com">pierre@nytromarketing.com</a> and Pierre will pass your message along.');
       } else {
-        flashNote(`<strong>Couldn't send (${body.error || res.status}).</strong> Try again, or email stan@berteloot.org directly.`);
+        flashNote(`<strong>Couldn't send (${body.error || res.status}).</strong> Try again or email <a href="mailto:pierre@nytromarketing.com">pierre@nytromarketing.com</a>.`);
       }
     } catch (err) {
       flashNote("<strong>Network error.</strong> Check your connection and try again.");
