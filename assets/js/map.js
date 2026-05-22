@@ -60,7 +60,25 @@
   // Fit to the map area
   map.fitBounds(overlayBounds, { padding: [10, 10] });
 
-  // Put-in marker (approximate — to be confirmed by Stan's inReach on day 1)
+  // Real SEPAQ GPX route
+  new L.GPX('assets/gpx/route.gpx', {
+    async: true,
+    polyline_options: {
+      color: '#C8392E',
+      weight: 3,
+      opacity: 0.85,
+      lineCap: 'round',
+      lineJoin: 'round',
+    },
+    marker_options: {
+      startIconUrl: null,
+      endIconUrl: null,
+      shadowUrl: null,
+      wptIconUrls: { '': null },
+    },
+  }).addTo(map);
+
+  // Put-in marker
   const putIn = [47.718, -77.140];
   L.marker(putIn, {
     icon: L.divIcon({
