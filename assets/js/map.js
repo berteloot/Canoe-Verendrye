@@ -37,25 +37,11 @@
     scrollWheelZoom: false,
   });
 
-  // OSM base for geographic context
-  const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // OSM base
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18,
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · Map overlay © SEPAQ',
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   }).addTo(map);
-
-  // Official SEPAQ map as a georeferenced image overlay
-  const sepaq = L.imageOverlay(
-    'assets/img/sepaq-route-overlay.jpg',
-    overlayBounds,
-    { opacity: 0.92, alt: 'Official SEPAQ topographic map of the Petite boucle Chochocouane n° 61' }
-  ).addTo(map);
-
-  // Layer toggle so the user can compare with OSM alone
-  L.control.layers(
-    null,
-    { 'SEPAQ official map': sepaq },
-    { collapsed: false, position: 'topright' }
-  ).addTo(map);
 
   // Fit to the map area
   map.fitBounds(overlayBounds, { padding: [10, 10] });
