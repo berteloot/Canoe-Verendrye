@@ -34,6 +34,23 @@
 
   renderStored();
 
+  // Turnstile execute-on-submit: pendingData holds form values while we wait
+  // for a fresh token from Cloudflare (avoids expired-token errors).
+  let pendingData = null;
+
+  window.onTurnstileToken = async function (token) {
+    if (!pendingData) return;
+    const data = Object.assign({}, pendingData, { 'cf-turnstile-response': token });
+    pendingData = null;
+    await doPost(data);
+  };
+
+  window.onTurnstileError = function () {
+    pendingData = null;
+    setBusy(false);
+    flashNote('<strong>Security check failed.</strong> Try refreshing the page.');
+  };
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -43,7 +60,6 @@
     const isLive = location.hostname.endsWith('berteloot.org');
 
     if (!isLive) {
-      // Local preview: store + render locally.
       saveLocal({
         name: String(data.name).slice(0, 60),
         message: String(data.message).slice(0, 800),
@@ -54,13 +70,20 @@
       return;
     }
 
-    // Production: post to Worker.
-    if (!data['cf-turnstile-response']) {
-      flashNote('<strong>Captcha not ready.</strong> Please wait a moment and try again.');
-      return;
-    }
-
     setBusy(true);
+    pendingData = data;
+
+    if (window.turnstile) {
+      // Execute triggers the challenge and fires onTurnstileToken with a fresh token.
+      window.turnstile.execute('.cf-turnstile');
+    } else {
+      // Turnstile script blocked by browser — submit without token.
+      pendingData = null;
+      await doPost(data);
+    }
+  });
+
+  async function doPost(data) {
     try {
       const res = await fetch(ENDPOINT, {
         method: 'POST',
@@ -70,24 +93,24 @@
       const body = await res.json().catch(() => ({}));
       if (res.ok && body.ok) {
         form.reset();
-        if (window.turnstile) window.turnstile.reset();
+        if (window.turnstile) window.turnstile.reset('.cf-turnstile');
         flashNote('<strong>On its way.</strong> Your message is headed to the Garmin via satellite.');
       } else {
-        if (window.turnstile) window.turnstile.reset();
+        if (window.turnstile) window.turnstile.reset('.cf-turnstile');
         if (body.error === 'invalid_code' || body.error === 'missing_code') {
           flashNote('<strong>Wrong code.</strong> Don\'t have it? Email <a href="mailto:pierre@nytromarketing.com">pierre@nytromarketing.com</a> and Pierre will pass your message along.');
         } else if (body.error === 'captcha_failed') {
-          flashNote('<strong>Security check failed.</strong> The form has been refreshed — please try again.');
+          flashNote('<strong>Security check failed.</strong> Please refresh the page and try again.');
         } else {
           flashNote(`<strong>Couldn\'t send (${body.error || res.status}).</strong> Try again or email <a href="mailto:pierre@nytromarketing.com">pierre@nytromarketing.com</a>.`);
         }
       }
     } catch (err) {
-      flashNote("<strong>Network error.</strong> Check your connection and try again.");
+      flashNote('<strong>Network error.</strong> Check your connection and try again.');
     } finally {
       setBusy(false);
     }
-  });
+  }
 
   function saveLocal(entry) {
     const stored = JSON.parse(localStorage.getItem(LS_KEY) || '[]');

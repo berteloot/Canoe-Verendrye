@@ -171,7 +171,12 @@
         <input id="c-garmin-code" name="garmin_code" type="password" maxlength="60" required autocomplete="off" placeholder="Required to reach the Garmin">
       </div>
 
-      <div class="cf-turnstile" data-sitekey="0x4AAAAAADUDxLtb-NXuVC76" data-theme="light"></div>
+      <div class="cf-turnstile"
+           data-sitekey="0x4AAAAAADUDxLtb-NXuVC76"
+           data-theme="light"
+           data-execution="execute"
+           data-callback="onTurnstileToken"
+           data-error-callback="onTurnstileError"></div>
 
       <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
         <p class="comments__note" id="comments-note">
