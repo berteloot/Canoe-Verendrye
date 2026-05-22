@@ -17,6 +17,23 @@
 
 const TURNSTILE_VERIFY = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 const RESEND_SEND = "https://api.resend.com/emails";
+const GARMIN_DELAY_MS = 400; // artificial delay on every password attempt
+
+// Timing-safe string comparison via HMAC to prevent timing attacks.
+async function safeMatch(a, b) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.generateKey(
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const [sigA, sigB] = await Promise.all([
+    crypto.subtle.sign("HMAC", key, enc.encode(a)),
+    crypto.subtle.sign("HMAC", key, enc.encode(b)),
+  ]);
+  const ua = new Uint8Array(sigA), ub = new Uint8Array(sigB);
+  let diff = 0;
+  for (let i = 0; i < ua.length; i++) diff |= ua[i] ^ ub[i];
+  return diff === 0;
+}
 
 function corsHeaders(env) {
   return {
@@ -147,7 +164,11 @@ export default {
     let garminSent = false;
     const garminPassword = (env.GARMIN_PASSWORD || "").trim();
     const garminEmail = (env.GARMIN_INREACH_EMAIL || "").trim();
-    if (garminCode && garminPassword && garminEmail && garminCode === garminPassword) {
+    // Always delay when a code was submitted — prevents timing-based enumeration.
+    if (garminCode) await new Promise(r => setTimeout(r, GARMIN_DELAY_MS));
+    const codeCorrect = garminCode && garminPassword && garminEmail &&
+      await safeMatch(garminCode, garminPassword);
+    if (codeCorrect) {
       const prefix = `${name}: `;
       const maxBody = 160 - prefix.length;
       const garminBody = prefix + message.slice(0, maxBody > 0 ? maxBody : 0);
