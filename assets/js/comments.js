@@ -72,10 +72,15 @@
         form.reset();
         if (window.turnstile) window.turnstile.reset();
         flashNote('<strong>On its way.</strong> Your message is headed to the Garmin via satellite.');
-      } else if (body.error === 'invalid_code' || body.error === 'missing_code') {
-        flashNote('<strong>Wrong code.</strong> Don\'t have it? Email <a href="mailto:pierre@nytromarketing.com">pierre@nytromarketing.com</a> and Pierre will pass your message along.');
       } else {
-        flashNote(`<strong>Couldn't send (${body.error || res.status}).</strong> Try again or email <a href="mailto:pierre@nytromarketing.com">pierre@nytromarketing.com</a>.`);
+        if (window.turnstile) window.turnstile.reset();
+        if (body.error === 'invalid_code' || body.error === 'missing_code') {
+          flashNote('<strong>Wrong code.</strong> Don\'t have it? Email <a href="mailto:pierre@nytromarketing.com">pierre@nytromarketing.com</a> and Pierre will pass your message along.');
+        } else if (body.error === 'captcha_failed') {
+          flashNote('<strong>Captcha expired.</strong> The form has been refreshed — please try again.');
+        } else {
+          flashNote(`<strong>Couldn\'t send (${body.error || res.status}).</strong> Try again or email <a href="mailto:pierre@nytromarketing.com">pierre@nytromarketing.com</a>.`);
+        }
       }
     } catch (err) {
       flashNote("<strong>Network error.</strong> Check your connection and try again.");
