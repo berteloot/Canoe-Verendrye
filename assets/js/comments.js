@@ -77,7 +77,7 @@
         if (body.error === 'invalid_code' || body.error === 'missing_code') {
           flashNote('<strong>Wrong code.</strong> Don\'t have it? Email <a href="mailto:pierre@nytromarketing.com">pierre@nytromarketing.com</a> and Pierre will pass your message along.');
         } else if (body.error === 'captcha_failed') {
-          flashNote('<strong>Captcha expired.</strong> The form has been refreshed — please try again.');
+          flashNote('<strong>Security check failed.</strong> The form has been refreshed — please try again.');
         } else {
           flashNote(`<strong>Couldn\'t send (${body.error || res.status}).</strong> Try again or email <a href="mailto:pierre@nytromarketing.com">pierre@nytromarketing.com</a>.`);
         }

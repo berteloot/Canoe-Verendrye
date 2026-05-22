@@ -1,10 +1,8 @@
 // Comments form handler for canoe-verendrye.berteloot.org
 //
 // Receives POST from tracking.html#comments, verifies the Cloudflare Turnstile
-// token, then emails the message to stan@berteloot.org via Resend.
-//
-// If the optional `garmin_code` field matches GARMIN_PASSWORD, also forwards
-// a short message to GARMIN_INREACH_EMAIL so it arrives on the inReach device.
+// token, checks the secret code, emails the message to stan@berteloot.org via
+// Resend, and forwards a short message to the Garmin inReach via satellite email.
 //
 // Bindings expected (via wrangler.toml [vars] / secrets):
 //   TURNSTILE_SECRET     Turnstile secret key (set as secret)
@@ -119,6 +117,7 @@ export default {
     });
     const verifyJson = await verifyRes.json().catch(() => ({}));
     if (!verifyJson.success) {
+      console.log("turnstile failed", JSON.stringify(verifyJson["error-codes"]));
       return jsonResponse(
         { ok: false, error: "captcha_failed", details: verifyJson["error-codes"] || [] },
         403,
