@@ -613,6 +613,68 @@ font[style*="background"] { background: transparent !important; }
 }
 .dispatch__loc:hover { color: var(--canoe-red-dark); }
 
+/* ---------- Resources ---------- */
+
+.res-list {
+  list-style: none;
+  margin: 0 0 2rem;
+  padding: 0;
+}
+.res-item {
+  padding: 1rem 0;
+  border-top: 1px solid var(--rule);
+}
+.res-item:first-child { border-top: none; padding-top: 0; }
+.res-item__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+.res-item__head a,
+.res-item__head span:not(.res-tag) {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--forest-dark);
+}
+.res-item__head a { text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.res-item__head a:hover { color: var(--canoe-red); }
+.res-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.15em 0.55em;
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.res-tag--web      { background: #E8F0FB; color: #2256A8; }
+.res-tag--pdf      { background: #FDE8E6; color: #9E2A21; }
+.res-tag--community{ background: #FFF3E0; color: #9A5B00; }
+.res-tag--video    { background: #FCE8E8; color: #B71C1C; }
+.res-note {
+  margin: 0;
+  font-size: 0.92rem;
+  color: rgba(28,28,28,0.65);
+  line-height: 1.55;
+}
+.res-ruling {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: rgba(28,28,28,0.45);
+  font-style: italic;
+}
+.res-context {
+  font-size: 0.92rem;
+  color: rgba(28,28,28,0.6);
+  font-style: italic;
+  margin: -0.5rem 0 1rem;
+}
+
 /* ---------- Tracking + comments ---------- */
 
 .tracker {
