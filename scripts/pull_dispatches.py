@@ -81,11 +81,8 @@ def api(method: str, path: str, body: dict | None = None) -> dict:
         raise SystemExit(f"AgentMail {method} {path} → {e.code} {body}")
 
 
-def list_messages(inbox: str, after_cursor: str | None) -> list[dict]:
-    qs = "?limit=50"
-    if after_cursor:
-        qs += f"&after={urllib.request.quote(after_cursor)}"
-    data = api("GET", f"/inboxes/{inbox}/messages{qs}")
+def list_messages(inbox: str) -> list[dict]:
+    data = api("GET", f"/inboxes/{inbox}/messages?limit=50")
     # AgentMail v0 returns {"messages": [...], "count": N, ...}
     if isinstance(data, dict):
         return data.get("messages") or data.get("data") or []
@@ -195,16 +192,13 @@ def main() -> int:
         raise SystemExit("AGENTMAIL_API_KEY not set")
     inbox = env("AGENTMAIL_PIERRE_INBOX_ID", "pierre@agentmail.to")
 
-    cursor = load_cursor()
-    msgs = list_messages(inbox, cursor)
+    msgs = list_messages(inbox)
     if not msgs:
-        print("no new messages")
+        print("no messages")
         return 0
 
     new_paths: list[Path] = []
-    last_id = cursor
     for m in msgs:
-        last_id = m.get("message_id") or m.get("id") or last_id
         if not is_dispatch(m):
             continue
         # If list view didn't include full body, fetch the full message.
@@ -226,8 +220,6 @@ def main() -> int:
         new_paths.append(path)
         print(f"wrote {path.name}: {entry['body'][:60]}…")
 
-    if last_id:
-        save_cursor(last_id)
     if not new_paths:
         print("no dispatches in this batch")
         return 0
