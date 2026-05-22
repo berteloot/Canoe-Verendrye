@@ -60,7 +60,10 @@
       if (res.ok && body.ok) {
         form.reset();
         if (window.turnstile) window.turnstile.reset();
-        flashNote('<strong>Sent.</strong> Stan reads these when back in cell range on June 21.');
+        const msg = body.garmin
+          ? '<strong>Sent — and forwarded to the Garmin.</strong> Stan will read it on the water.'
+          : '<strong>Sent.</strong> Stan reads these when back in cell range on June 21.';
+        flashNote(msg);
       } else {
         flashNote(`<strong>Couldn't send (${body.error || res.status}).</strong> Try again, or email stan@berteloot.org directly.`);
       }

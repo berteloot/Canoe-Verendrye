@@ -3,12 +3,17 @@
 // Receives POST from tracking.html#comments, verifies the Cloudflare Turnstile
 // token, then emails the message to stan@berteloot.org via Resend.
 //
+// If the optional `garmin_code` field matches GARMIN_PASSWORD, also forwards
+// a short message to GARMIN_INREACH_EMAIL so it arrives on the inReach device.
+//
 // Bindings expected (via wrangler.toml [vars] / secrets):
-//   TURNSTILE_SECRET  Turnstile secret key (set as secret)
-//   RESEND_API_KEY    Resend API key (set as secret)
-//   MAIL_TO           stan@berteloot.org
-//   MAIL_FROM         e.g. "Canoe Comments <comments@berteloot.org>"
-//   ALLOWED_ORIGIN    https://canoe-verendrye.berteloot.org
+//   TURNSTILE_SECRET     Turnstile secret key (set as secret)
+//   RESEND_API_KEY       Resend API key (set as secret)
+//   MAIL_TO              stan@berteloot.org
+//   MAIL_FROM            e.g. "Canoe Comments <comments@berteloot.org>"
+//   ALLOWED_ORIGIN       https://canoe-verendrye.berteloot.org
+//   GARMIN_PASSWORD      Secret code that unlocks Garmin forwarding (set as secret)
+//   GARMIN_INREACH_EMAIL Garmin inReach message email address (set as secret)
 
 const TURNSTILE_VERIFY = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 const RESEND_SEND = "https://api.resend.com/emails";
@@ -69,6 +74,7 @@ export default {
     const name = (payload.name || "").toString().trim();
     const message = (payload.message || "").toString().trim();
     const token = (payload["cf-turnstile-response"] || "").toString();
+    const garminCode = (payload["garmin_code"] || "").toString().trim();
 
     if (!name || name.length > 60) {
       return jsonResponse({ ok: false, error: "invalid_name" }, 400, env);
@@ -137,6 +143,33 @@ export default {
       return jsonResponse({ ok: false, error: "send_failed" }, 502, env);
     }
 
-    return jsonResponse({ ok: true }, 200, env);
+    // If the correct code was supplied, forward a short message to the inReach.
+    let garminSent = false;
+    const garminPassword = (env.GARMIN_PASSWORD || "").trim();
+    const garminEmail = (env.GARMIN_INREACH_EMAIL || "").trim();
+    if (garminCode && garminPassword && garminEmail && garminCode === garminPassword) {
+      const prefix = `${name}: `;
+      const maxBody = 160 - prefix.length;
+      const garminBody = prefix + message.slice(0, maxBody > 0 ? maxBody : 0);
+      const garminRes = await fetch(RESEND_SEND, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${env.RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: env.MAIL_FROM,
+          to: garminEmail,
+          subject: garminBody,
+          text: garminBody,
+        }),
+      });
+      garminSent = garminRes.ok;
+      if (!garminRes.ok) {
+        console.log("garmin forward error", garminRes.status, await garminRes.text().catch(() => ""));
+      }
+    }
+
+    return jsonResponse({ ok: true, garmin: garminSent }, 200, env);
   },
 };
