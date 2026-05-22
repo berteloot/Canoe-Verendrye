@@ -57,6 +57,13 @@ GARMIN_LATLON_RE = re.compile(
 GARMIN_SIG_RE = re.compile(
     r"\n+(?:Sent|.* sent this message) from.*$", re.IGNORECASE | re.DOTALL
 )
+# Additional boilerplate patterns in newer Garmin inReach email formats.
+GARMIN_BOILERPLATE_RE = re.compile(
+    r"\n*(?:View the location or send a reply|Do not reply directly to this message|"
+    r"This message was sent to you using the inReach|"
+    r"Please Note: Replies to this email are not answered).*$",
+    re.IGNORECASE | re.DOTALL,
+)
 
 
 def env(name: str, default: str | None = None) -> str | None:
@@ -96,6 +103,9 @@ def get_message(inbox: str, mid: str) -> dict:
 def is_dispatch(msg: dict) -> bool:
     sender = (msg.get("from") or msg.get("from_email") or "").lower()
     subject = (msg.get("subject") or "")
+    # Exclude reply emails (Re:, Fwd:) — these are not device dispatches.
+    if re.match(r"^(Re|Fwd?):", subject, re.IGNORECASE):
+        return False
     if any(p in sender for p in INREACH_SENDER_PATTERNS):
         return True
     if DISPATCH_TAG_RE.match(subject):
@@ -111,6 +121,7 @@ def parse(msg: dict) -> dict | None:
         return None
     lat_lon = GARMIN_LATLON_RE.search(body)
     body_clean = GARMIN_SIG_RE.sub("", body).strip()
+    body_clean = GARMIN_BOILERPLATE_RE.sub("", body_clean).strip()
     body_clean = DISPATCH_TAG_RE.sub("", body_clean).strip()
     if not body_clean:
         return None
