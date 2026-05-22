@@ -567,7 +567,13 @@ font[style*="background"] { background: transparent !important; }
 .dispatches__title {
   font-family: var(--serif);
   font-size: 1.4rem;
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.25rem 0;
+}
+.dispatches__sub {
+  font-size: 0.85rem;
+  color: rgba(28,28,28,0.5);
+  margin: 0 0 1.25rem 0;
+  font-style: italic;
 }
 .dispatches__empty {
   color: rgba(28,28,28,0.55);
