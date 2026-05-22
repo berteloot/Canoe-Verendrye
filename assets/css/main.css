@@ -747,6 +747,28 @@ font[style*="background"] { background: transparent !important; }
   border-color: var(--canoe-red);
 }
 .comments__form textarea { min-height: 120px; resize: vertical; }
+
+.input-reveal { position: relative; }
+.input-reveal input { padding-right: 2.6rem; }
+.input-reveal__toggle {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: rgba(28,28,28,0.45);
+  line-height: 0;
+  display: flex;
+  align-items: center;
+}
+.input-reveal__toggle:hover { color: var(--charcoal); }
+.input-reveal__toggle svg { width: 18px; height: 18px; }
+.input-reveal__toggle .icon-eye-closed { display: none; }
+.input-reveal__toggle[aria-pressed="true"] .icon-eye-open { display: none; }
+.input-reveal__toggle[aria-pressed="true"] .icon-eye-closed { display: block; }
 .comments__note {
   font-size: 0.82rem;
   color: rgba(28,28,28,0.55);

@@ -58,6 +58,17 @@ function vCanoeSetLang(lang) {
   });
 })();
 
+/* ---------- Password reveal toggles ------------------------- */
+document.querySelectorAll('.input-reveal__toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const input = btn.closest('.input-reveal').querySelector('input');
+    const visible = input.type === 'text';
+    input.type = visible ? 'password' : 'text';
+    btn.setAttribute('aria-pressed', String(!visible));
+    btn.setAttribute('aria-label', visible ? 'Show password' : 'Hide password');
+  });
+});
+
 /* Google Translate widget init (called by the loader script) */
 function googleTranslateElementInit() {
   /* eslint-disable no-undef */
