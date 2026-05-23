@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>The Red Canoe · Live Dispatches</title>
+  <link>https://canoe-verendrye.berteloot.org/journal.html</link>
+  <atom:link href="https://canoe-verendrye.berteloot.org/rss.xml" rel="self" type="application/rss+xml"/>
+  <description>Satellite messages from Violette, Stan and Charlie — La Vérendrye canoe expedition, June 2026.</description>
+  <language>en</language>
+</channel>
+</rss>
