@@ -43,8 +43,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/main.css">
 
-  <!-- Cloudflare Turnstile -->
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-GXN3VF6T09"></script>
   <script>
@@ -109,10 +107,10 @@
           marginwidth="0"
           marginheight="0"
           width="810"
-          height="1100"
+          height="1300"
           allowfullscreen
           loading="lazy"
-          style="width:100%;max-width:810px;height:1100px;display:block;margin:0 auto;"></iframe>
+          style="width:100%;max-width:810px;height:1300px;display:block;margin:0 auto;"></iframe>
       </div>
     </div>
 
@@ -129,93 +127,17 @@
   </div>
 </section>
 
-<!-- ===================== COMMENTS ===================== -->
-<section style="background:var(--birch); padding-top:3rem;" id="comments">
-  <div class="container container--text">
-    <div class="section-head" style="text-align:left;">
-      <h4>Send a message to the Garmin</h4>
-      <h2>Reach us on the water.</h2>
-      <p style="margin:0;">
-        This form is for friends and family with the secret code. Your message is forwarded
-        directly to our Garmin inReach Mini 3 via satellite, wherever we are on the lake.
-      </p>
-    </div>
-
-    <!--
-      Form posts to the Cloudflare Worker at comments-api.berteloot.org.
-      The Worker verifies the Turnstile token, checks the secret code,
-      and forwards the message to the Garmin inReach via Resend.
-      A honeypot field catches naive bots.
-    -->
-    <form
-      id="comments-form"
-      class="comments__form"
-      name="canoe-comments"
-      method="POST"
-      action="https://comments-api.berteloot.org/"
-    >
-      <p style="display:none;"><label>Don't fill this out: <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
-
-      <div>
-        <label for="c-name">Your name</label>
-        <input id="c-name" name="name" type="text" maxlength="60" required autocomplete="name">
-      </div>
-
-      <div>
-        <label for="c-message">Your message</label>
-        <textarea id="c-message" name="message" maxlength="800" required placeholder="Paddle safe! Sending good wind from..."></textarea>
-      </div>
-
-      <div>
-        <label for="c-garmin-code">Secret code</label>
-        <div class="input-reveal">
-          <input id="c-garmin-code" name="garmin_code" type="password" maxlength="60" required autocomplete="off" placeholder="Required to reach the Garmin">
-          <button type="button" class="input-reveal__toggle" aria-label="Show password" aria-pressed="false">
-            <!-- eye-open -->
-            <svg class="icon-eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            <!-- eye-closed -->
-            <svg class="icon-eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <div class="cf-turnstile"
-           data-sitekey="0x4AAAAAADUDxLtb-NXuVC76"
-           data-theme="light"
-           data-execution="execute"
-           data-callback="onTurnstileToken"
-           data-error-callback="onTurnstileError"></div>
-
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
-        <p class="comments__note" id="comments-note">
-          <strong>Note:</strong> messages arrive on the Garmin within minutes. 160-character limit on satellite messages.
-        </p>
-        <button class="btn" type="submit">Send →</button>
-      </div>
-    </form>
-
-    <p class="comments__alt" id="comments-alt-contact">
-      Don't have the code? Reach Stan at
-      <span class="js-email" data-u="pierre" data-d="nytromarketing.com"></span>
-      — Pierre will pass it along.
-    </p>
-
-    <div id="comments-list" class="comments__list" aria-live="polite"></div>
-  </div>
-</section>
-
 <footer class="footer">
   <div class="container footer__inner">
     <div class="footer__brand">
       <svg viewBox="0 0 64 32" aria-hidden="true"><path d="M2 14 C 10 26, 54 26, 62 14 L 56 14 C 50 20, 14 20, 8 14 Z" fill="#C8392E"/></svg>
       <span>The Red Canoe · La Vérendrye 2026</span>
     </div>
-    <div><a href="tracking.html">Live tracking</a> · <a href="tracking.html#comments">Leave a note</a></div>
+    <div><a href="tracking.html">Live tracking</a></div>
   </div>
 </footer>
 
 <script src="assets/js/main.js"></script>
-<script src="assets/js/comments.js"></script>
 <div id="google_translate_element" aria-hidden="true"></div>
 <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
 </body>
