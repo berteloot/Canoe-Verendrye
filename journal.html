@@ -43,6 +43,29 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/main.css">
   <link rel="alternate" type="application/rss+xml" title="The Red Canoe · Live Dispatches" href="/rss.xml">
+  <style>
+    .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      margin-top: 0 !important;
+      padding: clamp(17px, 5%, 40px) clamp(17px, 7%, 50px) !important;
+      max-width: none !important;
+      border-radius: 6px !important;
+      box-shadow: none !important;
+    }
+    .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview,
+    .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview * { box-sizing: border-box !important; }
+    .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-heading { width: 100% !important; }
+    .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-heading h5 { margin-top: 0 !important; margin-bottom: 0 !important; }
+    .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-input-field { margin-top: 20px !important; width: 100% !important; }
+    .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-input-field input { width: 100% !important; height: 40px !important; border-radius: 6px !important; border: 2px solid #e9e8e8 !important; background-color: #fff; outline: none !important; color: #000 !important; font-family: "Inter", sans-serif !important; font-size: 14px; text-align: center; }
+    .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-input-field input::placeholder { color: #000 !important; opacity: 1 !important; }
+    .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-submit-button { margin-top: 10px !important; width: 100% !important; }
+    .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-submit-button button { width: 100% !important; height: 40px !important; border: 0 !important; border-radius: 6px !important; line-height: 0 !important; cursor: pointer !important; }
+    .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .powered-by-line { color: #231f20 !important; font-family: "Inter", sans-serif !important; font-size: 13px !important; font-weight: 400 !important; line-height: 25px !important; text-align: center !important; text-decoration: none !important; display: flex !important; width: 100% !important; justify-content: center !important; align-items: center !important; margin-top: 10px !important; }
+    .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .powered-by-line img { margin-left: 10px !important; height: 1.13em !important; max-height: 1.13em !important; }
+  </style>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-GXN3VF6T09"></script>
   <script>
@@ -107,12 +130,21 @@
   </div>
 
   <div class="container container--text">
-    <div style="margin:2rem 0;padding:1.25rem 1.5rem;background:#fff;border:1px solid var(--rule);border-left:4px solid var(--canoe-red);border-radius:4px;display:flex;flex-wrap:wrap;align-items:center;gap:1rem;">
-      <div style="flex:1;min-width:200px;">
-        <strong style="display:block;margin-bottom:0.25rem;">Get dispatches by email</strong>
-        <span style="font-size:0.9rem;color:#555;">Free. One email per dispatch. No spam.</span>
+    <div style="margin:2rem 0;padding:1.25rem 1.5rem;background:#fff;border:1px solid var(--rule);border-left:4px solid var(--canoe-red);border-radius:4px;">
+      <strong style="display:block;margin-bottom:0.25rem;">Get dispatches by email</strong>
+      <span style="font-size:0.9rem;color:#555;">Free. One email per dispatch. No spam.</span>
+      <div class="followit--follow-form-container" attr-a attr-b attr-c attr-d attr-e attr-f>
+        <form action="https://api.follow.it/subscription-form/Vis4aWtCanlvdmVtL1p0cFRVZ1pWVGdtMWpmVG9rK3ZPN3hTNzYrZUhydHBUbkltSklaVFJYMGlmU0s4WmRGSUVQeGZXU01Sa0o0VWFhSG1vTU41ZFdCaThLc2l5dDMxc1h2NTNLMmcxWTBRdksvdVhWbEtidElpdzUvc1IraCt8M0VEME9PQzBlNVVHb29nb005Q2p1VXdkc3oxNUZhZndoQ2hzNEZhRjloUT0=/8" method="post">
+          <div class="form-preview" style="background-color:#fff;border:none;position:relative;">
+            <div class="preview-input-field">
+              <input type="email" name="email" required placeholder="Enter your email" spellcheck="false" style="font-family:inherit;font-size:14px;text-align:center;background-color:#fff;">
+            </div>
+            <div class="preview-submit-button">
+              <button type="submit" style="font-family:inherit;font-weight:700;color:#fff;font-size:15px;text-align:center;background-color:#C8392E;">Subscribe</button>
+            </div>
+          </div>
+        </form>
       </div>
-      <a href="https://follow.it/the-red-canoe-live-dispatches?leanpub=1&observer=1" target="_blank" rel="noopener" style="display:inline-block;padding:0.6rem 1.25rem;background:var(--canoe-red,#C8392E);color:#fff;font-weight:600;font-size:0.9rem;border-radius:4px;text-decoration:none;white-space:nowrap;">Subscribe →</a>
     </div>
   </div>
 
