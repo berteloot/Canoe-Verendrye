@@ -6,5 +6,12 @@
   <atom:link href="https://canoe-verendrye.berteloot.org/rss.xml" rel="self" type="application/rss+xml"/>
   <description>Satellite messages from Violette, Stan and Charlie — La Vérendrye canoe expedition, June 2026.</description>
   <language>en</language>
+  <item>
+    <title>Testing the live dispatch system. If you receive this by ema · 📍 47.2341, -76.5012</title>
+    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
+    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260523T2100Z</guid>
+    <pubDate>Sat, 23 May 2026 21:00:00 +0000</pubDate>
+    <description>Testing the live dispatch system. If you receive this by email, the satellite pipeline is working. See you on the water June 17. · 📍 47.2341, -76.5012</description>
+  </item>
 </channel>
 </rss>
