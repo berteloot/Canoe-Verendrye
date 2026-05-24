@@ -109,7 +109,7 @@ def render_rss(entries: list[dict]) -> str:
             slug = received
         items += (
             f"  <item>\n"
-            f"    <title>{body[:60]}{loc}</title>\n"
+            f"    <title>{body}{loc}</title>\n"
             f"    <link>{SITE_URL}/journal.html</link>\n"
             f"    <guid isPermaLink=\"false\">{SITE_URL}/dispatches/{slug}</guid>\n"
             f"    <pubDate>{pub_date}</pubDate>\n"
