@@ -985,3 +985,107 @@ font[style*="background"] { background: transparent !important; }
   margin-bottom: 1rem;
 }
 .gallery-placeholder p { margin: 0; font-size: 1rem; }
+
+/* ---------- Subscribe popup ---------- */
+.subscribe-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0,0,0,0.55);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.subscribe-popup.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+.subscribe-popup__box {
+  background: #fff;
+  border-radius: 6px;
+  max-width: 420px;
+  width: 100%;
+  padding: 2rem 2rem 1.5rem;
+  position: relative;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+  transform: translateY(16px);
+  transition: transform 0.3s ease;
+}
+.subscribe-popup.is-open .subscribe-popup__box {
+  transform: translateY(0);
+}
+.subscribe-popup__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  color: rgba(28,28,28,0.4);
+}
+.subscribe-popup__close:hover { color: rgba(28,28,28,0.8); }
+.subscribe-popup__eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--canoe-red-dark);
+  margin-bottom: 0.4rem;
+}
+.subscribe-popup__title {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  margin: 0 0 0.4rem;
+  color: #1a1a1a;
+}
+.subscribe-popup__sub {
+  font-size: 0.88rem;
+  color: rgba(28,28,28,0.6);
+  margin: 0 0 1.25rem;
+}
+.subscribe-popup__form {
+  display: flex;
+  gap: 0.5rem;
+}
+.subscribe-popup__form input[type="email"] {
+  flex: 1;
+  height: 40px;
+  border: 1.5px solid #ddd;
+  border-radius: 4px;
+  padding: 0 0.75rem;
+  font-size: 0.9rem;
+  outline: none;
+}
+.subscribe-popup__form input[type="email"]:focus {
+  border-color: var(--canoe-red);
+}
+.subscribe-popup__form button {
+  height: 40px;
+  padding: 0 1.1rem;
+  background: var(--canoe-red);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.subscribe-popup__form button:hover { background: var(--canoe-red-dark); }
+.subscribe-popup__skip {
+  display: block;
+  text-align: center;
+  margin-top: 0.9rem;
+  font-size: 0.8rem;
+  color: rgba(28,28,28,0.45);
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+}
+.subscribe-popup__skip:hover { color: rgba(28,28,28,0.7); }
