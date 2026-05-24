@@ -5,3 +5,5 @@ node_modules/
 *.log
 .pierre-cursor
 .claude/
+subscribers.json
+sent_dispatches.json
