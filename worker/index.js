@@ -189,8 +189,11 @@ export default {
         text: garminBody,
       }),
     });
+    const garminResText = await garminRes.text().catch(() => "");
     if (!garminRes.ok) {
-      console.log("garmin forward error", garminRes.status, await garminRes.text().catch(() => ""));
+      console.log("garmin forward error", garminRes.status, garminResText);
+    } else {
+      console.log("garmin forward ok", garminRes.status, garminResText.slice(0, 200));
     }
 
     return jsonResponse({ ok: true, garmin: garminRes.ok }, 200, env);
