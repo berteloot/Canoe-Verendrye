@@ -179,7 +179,22 @@ def commit_and_push(new_paths: list[Path]) -> None:
     email = env("CANOE_GIT_USER_EMAIL", "pierre@agentmail.to")
     git("config", "user.name", name)
     git("config", "user.email", email)
-    files = [str(p.relative_to(ROOT)) for p in new_paths] + ["journal.html"]
+
+    # Sync with remote before committing: fetch origin, reset tracked files to
+    # origin/main state, then re-render so dispatches land in the current HTML.
+    # New dispatch JSON files (untracked) survive the reset untouched.
+    git("fetch", "origin")
+    git("reset", "--mixed", "origin/main")
+    subprocess.run(
+        ["git", "checkout", "--", "."],
+        cwd=ROOT, capture_output=True, check=True,
+    )
+    subprocess.run(
+        [sys.executable, str(RENDER_SCRIPT), "--no-email"],
+        cwd=ROOT, check=True,
+    )
+
+    files = [str(p.relative_to(ROOT)) for p in new_paths] + ["journal.html", "rss.xml"]
     git("add", *files)
     if not git("status", "--short"):
         return
