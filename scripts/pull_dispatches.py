@@ -41,6 +41,7 @@ import urllib.error
 ROOT = Path(__file__).resolve().parent.parent
 ENTRIES = ROOT / "journal-entries"
 CURSOR_FILE = ROOT / ".pierre-cursor"
+PUBLISHED_IDS_FILE = ROOT / ".pierre-published-ids"
 RENDER_SCRIPT = ROOT / "scripts" / "render-journal.py"
 
 AGENTMAIL_BASE = "https://api.agentmail.to/v0"
@@ -245,6 +246,22 @@ def save_cursor(value: str) -> None:
     CURSOR_FILE.write_text(value + "\n")
 
 
+def load_published_ids() -> set[str]:
+    """Return the set of AgentMail message IDs already published.
+
+    This file lives on the server (gitignored) so it persists even when
+    dispatch JSON files are deleted from the repo — preventing re-publish.
+    """
+    if PUBLISHED_IDS_FILE.exists():
+        return {l.strip() for l in PUBLISHED_IDS_FILE.read_text().splitlines() if l.strip()}
+    return set()
+
+
+def record_published_id(mid: str) -> None:
+    with PUBLISHED_IDS_FILE.open("a") as f:
+        f.write(mid + "\n")
+
+
 def main() -> int:
     if not env("AGENTMAIL_API_KEY"):
         raise SystemExit("AGENTMAIL_API_KEY not set")
@@ -255,13 +272,20 @@ def main() -> int:
         print("no messages")
         return 0
 
+    published_ids = load_published_ids()
+
     new_paths: list[Path] = []
     for m in msgs:
         if not is_dispatch(m):
             continue
+        raw_mid = m.get("message_id") or m.get("id") or ""
+        # Skip if this AgentMail message ID was already published.
+        # This persists across git cleanups, unlike the JSON file check.
+        if raw_mid and raw_mid in published_ids:
+            continue
         # If list view didn't include full body, fetch the full message.
         if not (m.get("text") or m.get("body_text") or m.get("body")):
-            full = get_message(inbox, m.get("message_id") or m.get("id"))
+            full = get_message(inbox, raw_mid)
             # Preserve list-level fields the full message might lack
             for k in ("from", "subject", "timestamp"):
                 if k in m and k not in full:
@@ -273,8 +297,12 @@ def main() -> int:
         # Skip if we already wrote this entry (same minute = same id)
         if (ENTRIES / f"{entry['id']}.json").exists():
             print(f"skip {entry['id']}: already published")
+            if raw_mid:
+                record_published_id(raw_mid)
             continue
         path = write_entry(entry)
+        if raw_mid:
+            record_published_id(raw_mid)
         new_paths.append(path)
         print(f"wrote {path.name}: {entry['body'][:60]}…")
 

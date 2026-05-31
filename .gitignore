@@ -4,6 +4,7 @@ node_modules/
 .env.local
 *.log
 .pierre-cursor
+.pierre-published-ids
 .claude/
 subscribers.json
 sent_dispatches.json
