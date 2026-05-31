@@ -48,8 +48,19 @@ INREACH_SENDER_PATTERNS = (
     "no.reply@garmin.com",
     "@garmin.com",
 )
+# Senders that should never be treated as device dispatches.
+NOISE_SENDER_PATTERNS = (
+    "pierre@agentmail.to",
+    "@nytromarketing.com",
+    "@berteloot.org",
+)
 DISPATCH_TAG_RE = re.compile(r"^DISPATCH:\s*", re.IGNORECASE)
 INREACH_SUBJECT_RE = re.compile(r"inReach message from", re.IGNORECASE)
+# Garmin auto-reply / informational subjects — not device messages.
+GARMIN_NOISE_SUBJECT_RE = re.compile(
+    r"^(?:please note|automated message|do not reply)",
+    re.IGNORECASE,
+)
 GARMIN_LATLON_RE = re.compile(
     r"Lat\s+(-?\d+\.\d+)\s*[,\s]\s*Lon\s+(-?\d+\.\d+)",
     re.IGNORECASE,
@@ -57,12 +68,20 @@ GARMIN_LATLON_RE = re.compile(
 GARMIN_SIG_RE = re.compile(
     r"\n+(?:Sent|.* sent this message) from.*$", re.IGNORECASE | re.DOTALL
 )
-# Additional boilerplate patterns in newer Garmin inReach email formats.
+# Boilerplate patterns in Garmin inReach email formats.
 GARMIN_BOILERPLATE_RE = re.compile(
     r"\n*(?:View the location or send a reply|Do not reply directly to this message|"
     r"This message was sent to you using the inReach|"
     r"Please Note: Replies to this email are not answered).*$",
     re.IGNORECASE | re.DOTALL,
+)
+# Body phrases that identify auto-responder emails, not device messages.
+# Checked after body cleaning as a final gate.
+AUTORESPONDER_BODY_MARKERS = (
+    "please note: replies to this email are not answered",
+    "you cannot send a direct reply to a message",
+    "this is an automated message",
+    "inreach product support team",
 )
 
 
@@ -103,8 +122,18 @@ def get_message(inbox: str, mid: str) -> dict:
 def is_dispatch(msg: dict) -> bool:
     sender = (msg.get("from") or msg.get("from_email") or "").lower()
     subject = (msg.get("subject") or "")
-    # Exclude reply emails (Re:, Fwd:) — these are not device dispatches.
+    preview = (msg.get("preview") or msg.get("snippet") or "").lower()
+    # Exclude our own addresses (reply-backs, bounces, etc.)
+    if any(p in sender for p in NOISE_SENDER_PATTERNS):
+        return False
+    # Exclude reply and forward threads.
     if re.match(r"^(Re|Fwd?):", subject, re.IGNORECASE):
+        return False
+    # Exclude Garmin auto-reply / informational emails by subject.
+    if GARMIN_NOISE_SUBJECT_RE.match(subject):
+        return False
+    # Exclude messages whose preview reveals auto-responder content.
+    if any(m in preview for m in AUTORESPONDER_BODY_MARKERS):
         return False
     if any(p in sender for p in INREACH_SENDER_PATTERNS):
         return True
@@ -124,6 +153,9 @@ def parse(msg: dict) -> dict | None:
     body_clean = GARMIN_BOILERPLATE_RE.sub("", body_clean).strip()
     body_clean = DISPATCH_TAG_RE.sub("", body_clean).strip()
     if not body_clean:
+        return None
+    # Final gate: reject if cleaned body is still auto-responder content.
+    if any(m in body_clean.lower() for m in AUTORESPONDER_BODY_MARKERS):
         return None
     received_iso = (
         msg.get("timestamp")
