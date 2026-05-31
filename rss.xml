@@ -6,47 +6,5 @@
   <atom:link href="https://canoe-verendrye.berteloot.org/rss.xml" rel="self" type="application/rss+xml"/>
   <description>Satellite messages from Violette, Stan and Charlie — La Vérendrye canoe expedition, June 2026.</description>
   <language>en</language>
-  <item>
-    <title>Do you see this ? · 📍 40.3658, -74.6370</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260531T2052Z</guid>
-    <pubDate>Sun, 31 May 2026 20:52:21 +0000</pubDate>
-    <description>Do you see this ? · 📍 40.3658, -74.6370</description>
-  </item>
-  <item>
-    <title>Test from the living room on may 31 · 📍 40.3659, -74.6369</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260531T1933Z</guid>
-    <pubDate>Sun, 31 May 2026 19:33:00 +0000</pubDate>
-    <description>Test from the living room on may 31 · 📍 40.3659, -74.6369</description>
-  </item>
-  <item>
-    <title>Test</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260522T1930Z</guid>
-    <pubDate>Fri, 22 May 2026 19:30:39 +0000</pubDate>
-    <description>Test</description>
-  </item>
-  <item>
-    <title>Hello this is a test · 📍 40.3658, -74.6369</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260522T1758Z</guid>
-    <pubDate>Fri, 22 May 2026 17:58:43 +0000</pubDate>
-    <description>Hello this is a test · 📍 40.3658, -74.6369</description>
-  </item>
-  <item>
-    <title>Hello everybody is doing well 👍 · 📍 40.3657, -74.6369</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260522T1521Z</guid>
-    <pubDate>Fri, 22 May 2026 15:21:05 +0000</pubDate>
-    <description>Hello everybody is doing well 👍 · 📍 40.3657, -74.6369</description>
-  </item>
-  <item>
-    <title>Off the put-in. P110 done. Charlie cried for two minutes then settled. · 📍 47.3123, -76.8422</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260519T0222Z</guid>
-    <pubDate>Tue, 19 May 2026 02:22:05 +0000</pubDate>
-    <description>Off the put-in. P110 done. Charlie cried for two minutes then settled. · 📍 47.3123, -76.8422</description>
-  </item>
 </channel>
 </rss>
