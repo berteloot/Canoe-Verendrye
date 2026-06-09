@@ -139,5 +139,40 @@
     <pubDate>Fri, 22 May 2026 19:30:00 +0000</pubDate>
     <description>Test</description>
   </item>
+  <item>
+    <title>Running around the way home</title>
+    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
+    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260609T1705Z</guid>
+    <pubDate>Tue, 09 Jun 2026 17:05:00 +0000</pubDate>
+    <description>Running around the way home</description>
+  </item>
+  <item>
+    <title>Test test test · 📍 40.3658, -74.6370</title>
+    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
+    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260609T1703Z</guid>
+    <pubDate>Tue, 09 Jun 2026 17:03:00 +0000</pubDate>
+    <description>Test test test · 📍 40.3658, -74.6370</description>
+  </item>
+  <item>
+    <title>Do you see this ? · 📍 40.3658, -74.6370</title>
+    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
+    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260531T2052Z</guid>
+    <pubDate>Sun, 31 May 2026 20:52:00 +0000</pubDate>
+    <description>Do you see this ? · 📍 40.3658, -74.6370</description>
+  </item>
+  <item>
+    <title>Test from the living room on may 31</title>
+    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
+    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260531T1933Z</guid>
+    <pubDate>Sun, 31 May 2026 19:33:00 +0000</pubDate>
+    <description>Test from the living room on may 31</description>
+  </item>
+  <item>
+    <title>Test</title>
+    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
+    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260522T1930Z</guid>
+    <pubDate>Fri, 22 May 2026 19:30:00 +0000</pubDate>
+    <description>Test</description>
+  </item>
 </channel>
 </rss>
