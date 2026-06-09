@@ -6,7 +6,14 @@
   <atom:link href="https://canoe-verendrye.berteloot.org/rss.xml" rel="self" type="application/rss+xml"/>
   <description>Satellite messages from Violette, Stan and Charlie — La Vérendrye canoe expedition, June 2026.</description>
   <language>en</language>
-  <item>
+    <item>
+    <title>When we meet the bears we cry</title>
+    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
+    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260609T192352Z</guid>
+    <pubDate>Tue, 09 Jun 2026 19:23:52 +0000</pubDate>
+    <description>When we meet the bears we cry</description>
+  </item>
+<item>
     <title>Why is if zombies · 📍 40.3657, -74.6369</title>
     <link>https://canoe-verendrye.berteloot.org/journal.html</link>
     <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260609T1827Z</guid>
