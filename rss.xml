@@ -6,7 +6,14 @@
   <atom:link href="https://canoe-verendrye.berteloot.org/rss.xml" rel="self" type="application/rss+xml"/>
   <description>Satellite messages from Violette, Stan and Charlie — La Vérendrye canoe expedition, June 2026.</description>
   <language>en</language>
-  <item>
+    <item>
+    <title>See it · 📍 40.3660, -74.6368</title>
+    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
+    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260610T124045Z</guid>
+    <pubDate>Wed, 10 Jun 2026 12:40:45 +0000</pubDate>
+    <description>See it · 📍 40.3660, -74.6368</description>
+  </item>
+<item>
     <title>Test final for sure! 🤔 · 📍 40.3659, -74.6370</title>
     <link>https://canoe-verendrye.berteloot.org/journal.html</link>
     <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260610T0156Z</guid>
