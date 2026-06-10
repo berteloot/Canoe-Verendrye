@@ -6,82 +6,16 @@
   <atom:link href="https://canoe-verendrye.berteloot.org/rss.xml" rel="self" type="application/rss+xml"/>
   <description>Satellite messages from Violette, Stan and Charlie — La Vérendrye canoe expedition, June 2026.</description>
   <language>en</language>
-  <item>
-    <title>Final test. · 📍 40.3655, -74.6371</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260610T0046Z</guid>
-    <pubDate>Wed, 10 Jun 2026 00:46:08 +0000</pubDate>
-    <description>Final test. · 📍 40.3655, -74.6371</description>
-  </item>
-  <item>
-    <title>Final test. · 📍 40.3655, -74.6371</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260610T0046Z</guid>
-    <pubDate>Wed, 10 Jun 2026 00:46:08 +0000</pubDate>
-    <description>Final test. · 📍 40.3655, -74.6371</description>
-  </item>
-  <item>
-    <title>We are going to get bread · 📍 40.3658, -74.6370</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260609T2352Z</guid>
-    <pubDate>Tue, 09 Jun 2026 23:52:48 +0000</pubDate>
-    <description>We are going to get bread · 📍 40.3658, -74.6370</description>
-  </item>
-  <item>
-    <title>We are going to get bread · 📍 40.3658, -74.6370</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260609T2352Z</guid>
-    <pubDate>Tue, 09 Jun 2026 23:52:48 +0000</pubDate>
-    <description>We are going to get bread · 📍 40.3658, -74.6370</description>
-  </item>
-  <item>
-    <title>When we meet the bears we cry</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260609T1923Z</guid>
-    <pubDate>Tue, 09 Jun 2026 19:23:52 +0000</pubDate>
-    <description>When we meet the bears we cry</description>
-  </item>
-  <item>
-    <title>When we meet the bears we cry · 📍 40.3657, -74.6368</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260609T1923Z</guid>
-    <pubDate>Tue, 09 Jun 2026 19:23:52 +0000</pubDate>
-    <description>When we meet the bears we cry · 📍 40.3657, -74.6368</description>
-  </item>
-  <item>
-    <title>Why is if zombies · 📍 40.3657, -74.6369</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260609T1827Z</guid>
-    <pubDate>Tue, 09 Jun 2026 18:27:33 +0000</pubDate>
-    <description>Why is if zombies · 📍 40.3657, -74.6369</description>
-  </item>
-  <item>
-    <title>To use burn before the night · 📍 40.3658, -74.6371</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260609T1731Z</guid>
-    <pubDate>Tue, 09 Jun 2026 17:31:57 +0000</pubDate>
-    <description>To use burn before the night · 📍 40.3658, -74.6371</description>
-  </item>
-  <item>
-    <title>Running around the way home · 📍 40.3659, -74.6368</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260609T1705Z</guid>
-    <pubDate>Tue, 09 Jun 2026 17:05:22 +0000</pubDate>
-    <description>Running around the way home · 📍 40.3659, -74.6368</description>
-  </item>
-  <item>
-    <title>Test test test · 📍 40.3658, -74.6370</title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260609T1703Z</guid>
-    <pubDate>Tue, 09 Jun 2026 17:03:39 +0000</pubDate>
-    <description>Test test test · 📍 40.3658, -74.6370</description>
-  </item>
-  <item>
-    <title></title>
-    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
-    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/</guid>
-    <pubDate></pubDate>
-    <description></description>
-  </item>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 </channel>
 </rss>
