@@ -6,15 +6,21 @@ Runs on AWS Lightsail (Pierre) on a cron, every 2 hours during the trip:
     0 */2 * * *  cd /opt/Canoe-Verendrye && /usr/bin/python3 scripts/pull_dispatches.py
 
 What it does:
-  1. Calls AgentMail v0 API, lists messages received since the last cursor.
+  1. Calls AgentMail v0 API, lists the 50 most recent inbox messages.
   2. Keeps only messages that match an inReach pattern (sender domain or
-     a manual "DISPATCH:" tag in the subject).
-  3. Parses each: strips Garmin signature, extracts lat/lon, normalizes
-     the body. Writes journal-entries/YYYYMMDDTHHMMZ.json.
-  4. Runs scripts/render-journal.py to update journal.html.
-  5. If anything changed: git add + commit + push. Render auto-deploys.
-  6. Marks messages as read in AgentMail so they aren't re-processed.
-  7. Persists cursor in .pierre-cursor (gitignored).
+     a manual "DISPATCH:" tag in the subject) AND were received on or
+     after TRIP_CUTOFF (old test traffic is permanently inert).
+  3. Skips anything already published: message ID recorded in
+     .pierre-published-ids (gitignored, server-local), or a JSON entry
+     with the same timestamp ID already on disk.
+  4. Parses the rest: strips Garmin signature, extracts lat/lon,
+     normalizes the body. Writes journal-entries/YYYYMMDDTHHMMZ.json.
+  5. Runs scripts/render-journal.py to update journal.html + rss.xml.
+  6. If anything changed: git add + commit + push. Render auto-deploys.
+
+Note: messages are NOT marked read in AgentMail and no cursor is kept.
+Every run re-lists the same recent messages; dedup layers in step 2-3
+are what prevent re-publishing.
 
 Env vars required (read from process env, set in Lightsail systemd unit
 or cron `EnvironmentFile=`):
@@ -40,11 +46,17 @@ import urllib.error
 
 ROOT = Path(__file__).resolve().parent.parent
 ENTRIES = ROOT / "journal-entries"
-CURSOR_FILE = ROOT / ".pierre-cursor"
 PUBLISHED_IDS_FILE = ROOT / ".pierre-published-ids"
 RENDER_SCRIPT = ROOT / "scripts" / "render-journal.py"
 
 AGENTMAIL_BASE = "https://api.agentmail.to/v0"
+
+# Hard floor: messages received before this moment are never dispatches.
+# The June 2026 device tests sit in the inbox forever; this keeps them
+# permanently inert even if the server-side .pierre-published-ids dedup
+# file is lost or the journal-entries JSON files are cleaned from git.
+# Trip runs Jul 7-11, 2026.
+TRIP_CUTOFF = datetime(2026, 7, 1, tzinfo=timezone.utc)
 INREACH_SENDER_PATTERNS = (
     "no.reply@garmin.com",
     "@garmin.com",
@@ -120,7 +132,23 @@ def get_message(inbox: str, mid: str) -> dict:
     return api("GET", f"/inboxes/{inbox}/messages/{urllib.request.quote(mid, safe='')}")
 
 
+def received_dt(msg: dict) -> datetime | None:
+    """Parse the message's received timestamp, or None if unparseable."""
+    raw = msg.get("timestamp") or msg.get("received_at") or msg.get("date") or ""
+    try:
+        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
 def is_dispatch(msg: dict) -> bool:
+    # Anything received before the trip window is old test traffic, never
+    # a dispatch. Messages with an unparseable timestamp pass through:
+    # parse() stamps them with now(), and dropping a real trail message
+    # is worse than letting the downstream filters judge it.
+    dt = received_dt(msg)
+    if dt is not None and dt < TRIP_CUTOFF:
+        return False
     sender = (msg.get("from") or msg.get("from_email") or "").lower()
     subject = (msg.get("subject") or "")
     preview = (msg.get("preview") or msg.get("snippet") or "").lower()
@@ -234,16 +262,6 @@ def commit_and_push(new_paths: list[Path]) -> None:
     n = len(new_paths)
     git("commit", "-m", f"Pierre: {n} new dispatch{'es' if n != 1 else ''} from the trail")
     git("push", "origin", "HEAD:main")
-
-
-def load_cursor() -> str | None:
-    if CURSOR_FILE.exists():
-        return CURSOR_FILE.read_text().strip() or None
-    return None
-
-
-def save_cursor(value: str) -> None:
-    CURSOR_FILE.write_text(value + "\n")
 
 
 def load_published_ids() -> set[str]:
