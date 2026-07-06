@@ -6,5 +6,12 @@
   <atom:link href="https://canoe-verendrye.berteloot.org/rss.xml" rel="self" type="application/rss+xml"/>
   <description>Satellite messages from Violette and Stan — La Vérendrye canoe expedition, July 2026.</description>
   <language>en</language>
+  <item>
+    <title>We are taking the road on Tuesday! · 📍 40.3658, -74.6372</title>
+    <link>https://canoe-verendrye.berteloot.org/journal.html</link>
+    <guid isPermaLink="false">https://canoe-verendrye.berteloot.org/dispatches/20260706T030721Z</guid>
+    <pubDate>Mon, 06 Jul 2026 03:07:21 +0000</pubDate>
+    <description>We are taking the road on Tuesday! · 📍 40.3658, -74.6372</description>
+  </item>
 </channel>
 </rss>
