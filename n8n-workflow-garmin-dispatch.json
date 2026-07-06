@@ -783,6 +783,7 @@
     "executionOrder": "v1",
     "timezone": "America/New_York",
     "saveDataErrorExecution": "all",
-    "saveDataSuccessExecution": "all"
+    "saveDataSuccessExecution": "all",
+    "errorWorkflow": "tzFEfRWMCOuDpOqR"
   }
 }
