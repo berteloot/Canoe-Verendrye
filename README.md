@@ -1,9 +1,9 @@
 # The Red Canoe — Violette & Stan · La Vérendrye 2026
 
-A static brochure + tracking site for Violette, Stan, and Charlie (Australian
-Shepherd, 7 months old at put-in) on the **Petite boucle Chochocouane n° 61**, a
-69 km canoe-camping loop in the Chochocouane sector of Réserve faunique La
-Vérendrye, Québec. Paddled July 7 to 11, 2026, taking out at the Lac Lavis take-out.
+A static brochure + tracking site for Violette and Stan on the **Petite boucle
+Chochocouane n° 61**, a 69 km canoe-camping loop in the Chochocouane sector of
+Réserve faunique La Vérendrye, Québec. Paddled July 7 to 11, 2026, taking out at
+the Lac Lavis take-out.
 
 Canoe: Mad River Explorer 17 in Royalex (Jim Henry design).
 

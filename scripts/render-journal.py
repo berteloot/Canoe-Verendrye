@@ -133,7 +133,7 @@ def render_rss(entries: list[dict]) -> str:
         "  <title>The Red Canoe · Live Dispatches</title>\n"
         f"  <link>{SITE_URL}/journal.html</link>\n"
         f"  <atom:link href=\"{SITE_URL}/rss.xml\" rel=\"self\" type=\"application/rss+xml\"/>\n"
-        "  <description>Satellite messages from Violette, Stan and Charlie — La Vérendrye canoe expedition, June 2026.</description>\n"
+        "  <description>Satellite messages from Violette and Stan — La Vérendrye canoe expedition, July 2026.</description>\n"
         "  <language>en</language>\n"
         f"{items}"
         "</channel>\n"
