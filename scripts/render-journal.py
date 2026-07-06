@@ -41,13 +41,28 @@ START_MARKER = "<!-- LIVE_DISPATCHES:START -->"
 END_MARKER = "<!-- LIVE_DISPATCHES:END -->"
 
 
+# Dispatch entries are named by their UTC timestamp, e.g. 20260710T1642Z.json
+# or 20260710T164231Z.json. Anything else in this directory (published-ids.json,
+# a stray note, an editor backup) is NOT a dispatch and must never be rendered.
+ENTRY_NAME_RE = re.compile(r"^\d{8}T\d{4,6}Z\.json$")
+
+
 def load_entries() -> list[dict]:
     entries = []
     for p in sorted(ENTRIES_DIR.glob("*.json")):
+        if not ENTRY_NAME_RE.match(p.name):
+            continue
         try:
-            entries.append(json.loads(p.read_text()))
+            entry = json.loads(p.read_text())
         except Exception as e:
             print(f"skip {p.name}: {e}", file=sys.stderr)
+            continue
+        # A real dispatch always has a body and a timestamp. Guard against
+        # malformed files rendering as blank ghost entries.
+        if not entry.get("body") or not entry.get("received_at"):
+            print(f"skip {p.name}: missing body/received_at", file=sys.stderr)
+            continue
+        entries.append(entry)
     entries.sort(key=lambda e: e.get("received_at", ""), reverse=True)
     return entries
 
@@ -64,7 +79,7 @@ def render(entries: list[dict]) -> str:
     if not entries:
         return (
             '\n      <p class="dispatches__empty">'
-            "No dispatches yet. The trip starts June 17, 2026."
+            "No dispatches yet. The trip starts July 7, 2026."
             "</p>\n    "
         )
     parts = ['\n      <ol class="dispatches">']
