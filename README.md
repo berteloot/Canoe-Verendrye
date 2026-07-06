@@ -136,25 +136,53 @@ Trail updates flow automatically from the inReach device to the site:
 1. Add `pierre@agentmail.to` as a contact in **Garmin Explore** and sync to
    the device before the trip.
 2. On the trail, compose a message on the inReach and send it to that contact.
-   Garmin delivers it via satellite as email from `no.reply@garmin.com`.
-3. A cron on AWS Lightsail runs `scripts/pull_dispatches.py` every 2 hours.
-   It polls Pierre's inbox, parses inReach messages, writes a JSON entry to
-   `journal-entries/`, rebuilds the `Live from the trail` block in
-   `journal.html`, and pushes to GitHub. Render auto-deploys.
+   Garmin delivers it via satellite as email from `no.reply.inreach@garmin.com`.
+3. The **n8n workflow "Canoe: Garmin Dispatch → Journal"** (on the n8n
+   Lightsail instance, `n8n.altilead.com`) runs **hourly**. It polls Pierre's
+   AgentMail inbox, filters and parses inReach messages, and commits the new
+   dispatch JSON + re-rendered `journal.html` + `rss.xml` to GitHub in one
+   atomic commit via the GitHub git Data API. Render auto-deploys. It then
+   Telegrams Stan a confirmation.
 
-**Max delay from send to live: 2 hours.**
+**Max delay from send to live: 1 hour.**
 
-### Test without the inReach
+The canonical workflow export lives in `n8n-workflow-garmin-dispatch.json`.
 
-Send any email to `pierre@agentmail.to` with subject `DISPATCH: day 1 test`
-and a one-line body, then run:
+### How re-publication is prevented (two layers)
+
+- `journal-entries/published-ids.json` — the workflow's dedup store. It is
+  fetched from this repo at the start of every run and re-committed with new
+  message IDs after each publish. **Do not delete it.** If the fetch errors,
+  the workflow aborts rather than risk re-publishing (fail-closed); if the
+  file is missing (404) the dedup set is empty, which is why layer 2 exists.
+- `TRIP_CUTOFF` (July 1, 2026) in the workflow's filter node and in
+  `scripts/pull_dispatches.py` — messages received before the cutoff are
+  never dispatches, so pre-trip test traffic stays inert regardless of the
+  dedup file's state.
+
+### GitHub auth
+
+The workflow authenticates with `GITHUB_CANOE_TOKEN` from
+`/home/ec2-user/n8n/.env` on the Lightsail box. The container bakes env at
+start: after changing it, run `cd /home/ec2-user/n8n && sudo docker compose
+up -d` to recreate. Fine-grained PATs expire — the July 2026 outage was an
+expired 30-day PAT. Use a long-lived token and calendar the renewal.
+
+### Trigger a run manually
+
+`curl https://n8n.altilead.com/webhook/canoe-dispatch` — starts a production
+execution immediately (same path the hourly schedule takes).
+
+### `scripts/pull_dispatches.py`
+
+A standalone Python fallback for the same pipeline (same filters, same
+cutoff). Not deployed anywhere; run it locally if n8n is down:
 
 ```bash
 cd clients/Canoe && CANOE_AUTOCOMMIT=0 python3 scripts/pull_dispatches.py
 ```
 
-A JSON file should appear in `journal-entries/` and `journal.html` should
-update. `CANOE_AUTOCOMMIT=0` skips the git push so nothing goes live.
+`CANOE_AUTOCOMMIT=0` skips the git push so nothing goes live.
 
 ## Brand notes
 

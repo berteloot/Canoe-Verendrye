@@ -1,0 +1,788 @@
+{
+  "name": "Canoe: Garmin Dispatch → Journal",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "ca000001-0000-0000-0000-000000000002",
+      "name": "Every 1h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "canoe-dispatch",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "ca000001-0000-0000-0000-000000000003",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        440
+      ],
+      "webhookId": "canoe-dispatch-webhook"
+    },
+    {
+      "parameters": {},
+      "id": "ca000001-0000-0000-0000-000000000004",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.agentmail.to/v0/inboxes/pierre@agentmail.to/messages?limit=100",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env['AGENTMAIL_API_KEY'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ca000001-0000-0000-0000-000000000005",
+      "name": "Fetch AgentMail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        280,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const TRIP_CUTOFF = Date.parse('2026-07-01T00:00:00Z'); // trip Jul 7-11; older = inert test traffic\nconst idsData = $('Fetch Published IDs').first().json;\n\nif (idsData && !idsData.content && idsData.message && idsData.message !== 'Not Found') {\n  throw new Error('published-ids.json fetch error: ' + idsData.message + ' — aborting to prevent re-publication');\n}\n\nlet publishedIds;\nif (idsData && idsData.content) {\n  try {\n    const decoded = Buffer.from(idsData.content.replace(/\\s/g,''), 'base64').toString('utf8');\n    publishedIds = new Set(JSON.parse(decoded).ids || []);\n  } catch(e) { publishedIds = new Set(); }\n} else {\n  publishedIds = new Set();\n}\n\nconst raw = $('Fetch AgentMail').first().json;\nconst msgs = raw.messages || raw.data || [];\n\nconst INREACH      = ['no.reply.inreach@garmin.com', '@garmin.com'];\nconst NOISE        = ['pierre@agentmail.to', '@nytromarketing.com', '@berteloot.org'];\nconst GARMIN_NOISE = /^(?:please note|automated message|do not reply)/i;\nconst DISPATCH_TAG = /^DISPATCH:\\s*/i;\nconst INREACH_SUBJ = /inReach message from/i;\nconst LATLON       = /Lat\\s+(-?\\d+\\.\\d+)[\\s,]+Lon\\s+(-?\\d+\\.\\d+)/i;\nconst SIG  = /\\n+(?:Sent from (?:my )?Garmin[^\\n]*|[^\\n]* sent this message from[^\\n]*)$/im;\nconst BOIL = /\\n*(?:View the location or send a reply|Do not reply directly to this message|This message was sent to you using the inReach|Please Note: Replies to this email are not answered).*/is;\nconst AUTORESP = [\n  'please note: replies to this email are not answered',\n  'you cannot send a direct reply',\n  'this is an automated message',\n  'inreach product support team'\n];\n\nfunction isDispatch(m) {\n  const ts = Date.parse(m.timestamp || m.received_at || m.date || '');\n  if (!Number.isNaN(ts) && ts < TRIP_CUTOFF) return false; // pre-trip test messages: never dispatches\n  const s    = (m.from || '').toLowerCase();\n  const subj = m.subject || '';\n  const prev = (m.preview || '').toLowerCase();\n  if (NOISE.some(p => s.includes(p))) return false;\n  if (/^(Re|Fwd?):/.test(subj)) return false;\n  if (GARMIN_NOISE.test(subj)) return false;\n  if (AUTORESP.some(x => prev.includes(x))) return false;\n  if (INREACH.some(p => s.includes(p))) return true;\n  if (DISPATCH_TAG.test(subj)) return true;\n  if (INREACH_SUBJ.test(subj)) return true;\n  return false;\n}\n\nfunction parse(m) {\n  const body = (m.text || m.preview || '').trim();\n  if (!body) return null;\n  const ll = LATLON.exec(body);\n  let clean = body.replace(SIG, '').replace(BOIL, '').replace(DISPATCH_TAG, '').trim();\n  if (!clean || AUTORESP.some(x => clean.toLowerCase().includes(x))) return null;\n  const iso = m.timestamp || m.created_at || new Date().toISOString();\n  const dt  = new Date(iso);\n  const p   = n => String(n).padStart(2,'0');\n  const id  = `${dt.getUTCFullYear()}${p(dt.getUTCMonth()+1)}${p(dt.getUTCDate())}T${p(dt.getUTCHours())}${p(dt.getUTCMinutes())}${p(dt.getUTCSeconds())}Z`;\n  const entry = { id, received_at: dt.toISOString().replace('.000Z','Z'), body: clean, source: 'inreach', raw_message_id: m.message_id || '' };\n  if (ll) { entry.lat = parseFloat(ll[1]); entry.lon = parseFloat(ll[2]); }\n  return entry;\n}\n\nconst dispatches = [];\nconst seenMids  = new Set();               // dedup by message_id\nconst seenBodies = new Map();              // dedup by normalized body text → index in dispatches\n\nfor (const m of msgs) {\n  if (!isDispatch(m)) continue;\n  const mid = m.message_id || '';\n  if (mid && publishedIds.has(mid)) continue;\n  if (mid && seenMids.has(mid)) continue;\n  if (mid) seenMids.add(mid);\n\n  const entry = parse(m);\n  if (!entry) continue;\n\n  // Body-text deduplication — if same text already queued, keep whichever has GPS\n  const normBody = entry.body.toLowerCase().replace(/\\s+/g, ' ').trim();\n  if (seenBodies.has(normBody)) {\n    const existingIdx = seenBodies.get(normBody);\n    const existingEntry = dispatches[existingIdx].entry;\n    // Upgrade to GPS version if this copy has coordinates and the existing one doesn't\n    if (typeof entry.lat === 'number' && typeof existingEntry.lat !== 'number') {\n      dispatches[existingIdx] = { entry, raw_mid: mid };\n    }\n    // Always seal the duplicate message_id too\n    if (mid) dispatches[existingIdx].extra_mids = [...(dispatches[existingIdx].extra_mids || []), mid];\n    continue;\n  }\n  seenBodies.set(normBody, dispatches.length);\n  dispatches.push({ entry, raw_mid: mid });\n}\n\nreturn [{ json: { dispatches, count: dispatches.length, published_ids_sha: idsData ? idsData.sha : null } }];"
+      },
+      "id": "ca000001-0000-0000-0000-000000000006",
+      "name": "Filter + Parse Dispatches",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combineOperation": "all"
+        }
+      },
+      "id": "ca000001-0000-0000-0000-000000000007",
+      "name": "Any New Dispatches?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.github.com/repos/berteloot/Canoe-Verendrye/contents/journal.html?ref=main",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env['GITHUB_CANOE_TOKEN'] }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ca000001-0000-0000-0000-000000000008",
+      "name": "Fetch journal.html",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.github.com/repos/berteloot/Canoe-Verendrye/contents/rss.xml?ref=main",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env['GITHUB_CANOE_TOKEN'] }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ca000001-0000-0000-0000-000000000009",
+      "name": "Fetch rss.xml",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      },
+      "id": "ca000001-0000-0000-0000-000000000017",
+      "name": "Merge Fetches",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1820,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst jData = $('Fetch journal.html').first().json;\nconst rData = $('Fetch rss.xml').first().json;\n\n// Guard: catch missing files early with a clear error\nif (!jData || !jData.content) throw new Error('journal.html not found in GitHub repo — run initial setup');\nif (!rData || !rData.content) throw new Error('rss.xml not found in GitHub repo — run initial setup');\n\nconst dispatches = $('Apply GPS + Reassemble').first().json.dispatches;\n\n// Strip all whitespace (not just \\n) from base64 before decoding — robust against RFC 2045 wrapping\nconst journalHtml = Buffer.from(jData.content.replace(/\\s/g,''), 'base64').toString('utf8');\nconst rssXml      = Buffer.from(rData.content.replace(/\\s/g,''), 'base64').toString('utf8');\n\nfunction esc(s) {\n  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');\n}\nfunction fmtDate(iso) {\n  const dt = new Date(iso);\n  const M  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];\n  const p  = n => String(n).padStart(2,'0');\n  return `${M[dt.getUTCMonth()]} ${p(dt.getUTCDate())}, ${dt.getUTCFullYear()} · ${p(dt.getUTCHours())}:${p(dt.getUTCMinutes())} UTC`;\n}\n\n// ── 1. Parse all existing <li> entries ────────────────────────────────────────\nconst S  = '<!-- LIVE_DISPATCHES:START -->';\nconst E  = '<!-- LIVE_DISPATCHES:END -->';\nconst si = journalHtml.indexOf(S);\nconst ei = journalHtml.indexOf(E);\nif (si === -1 || ei === -1) throw new Error('LIVE_DISPATCHES markers not found in journal.html');\n\nconst existingBlock = journalHtml.slice(si + S.length, ei);\nconst LI_RE = /<li class=\"dispatch\">[\\s\\S]*?<\\/li>/g;\nconst existingLis = [];\nlet m;\nwhile ((m = LI_RE.exec(existingBlock)) !== null) {\n  const dtMatch = m[0].match(/datetime=\"([^\"]+)\"/);\n  const bodyMatch = m[0].match(/<p class=\"dispatch__body\">([^<]*)<\\/p>/);\n  existingLis.push({ dt: dtMatch ? dtMatch[1] : '', body: bodyMatch ? bodyMatch[1] : '', html: m[0] });\n}\n\n// ── 2. Build <li> HTML for new dispatches ────────────────────────────────────\nconst newLis = dispatches.map(({ entry }) => {\n  let loc = '';\n  if (typeof entry.lat === 'number') {\n    const href = `https://www.google.com/maps/?q=${entry.lat},${entry.lon}`;\n    loc = `        <a class=\"dispatch__loc\" href=\"${href}\" target=\"_blank\" rel=\"noopener\">📍 ${entry.lat.toFixed(4)}, ${entry.lon.toFixed(4)}</a>\\n`;\n  }\n  return {\n    dt: entry.received_at,\n    body: entry.body,\n    html: `<li class=\"dispatch\">\\n        <time class=\"dispatch__date\" datetime=\"${esc(entry.received_at)}\">${fmtDate(entry.received_at)}</time>\\n        <p class=\"dispatch__body\">${esc(entry.body)}</p>\\n${loc}      </li>`\n  };\n});\n\n// ── 3. Merge, deduplicate by datetime AND body text, sort newest-first ──────────\nconst seen = new Set();\nconst seenBodies = new Set();\nconst allLis = [];\nfor (const item of [...newLis, ...existingLis]) {\n  if (item.dt && seen.has(item.dt)) continue;\n  const normBody = (item.body || '').toLowerCase().replace(/\\s+/g, ' ').trim();\n  if (normBody && seenBodies.has(normBody)) continue;\n  if (item.dt) seen.add(item.dt);\n  if (normBody) seenBodies.add(normBody);\n  allLis.push(item);\n}\nallLis.sort((a, b) => {\n  const da = new Date(a.dt), db = new Date(b.dt);\n  if (isNaN(da)) return 1;\n  if (isNaN(db)) return -1;\n  return db - da;\n});\n\n// ── 4. Rebuild journal.html ───────────────────────────────────────────────────\nconst olContent  = allLis.map(x => '      ' + x.html).join('\\n');\nconst newBlock   = `\\n      <ol class=\"dispatches\">\\n${olContent}\\n      </ol>\\n    `;\nconst newJournal = journalHtml.slice(0, si + S.length) + newBlock + journalHtml.slice(ei);\n\n// ── 5. Prepend new items to rss.xml (newest first) ───────────────────────────\nconst SITE = 'https://canoe-verendrye.berteloot.org';\nconst DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];\nconst MONS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];\nlet newItems = '';\nfor (const { entry } of dispatches) {\n  const dt  = new Date(entry.received_at);\n  const p   = n => String(n).padStart(2,'0');\n  const pub = `${DAYS[dt.getUTCDay()]}, ${p(dt.getUTCDate())} ${MONS[dt.getUTCMonth()]} ${dt.getUTCFullYear()} ${p(dt.getUTCHours())}:${p(dt.getUTCMinutes())}:${p(dt.getUTCSeconds())} +0000`;\n  const loc = typeof entry.lat === 'number' ? ` · 📍 ${entry.lat.toFixed(4)}, ${entry.lon.toFixed(4)}` : '';\n  const title = esc(entry.body.slice(0, 160)) + esc(loc);\n  newItems += `  <item>\\n    <title>${title}</title>\\n    <link>${SITE}/journal.html</link>\\n    <guid isPermaLink=\"false\">${SITE}/dispatches/${entry.id}</guid>\\n    <pubDate>${pub}</pubDate>\\n    <description>${esc(entry.body)}${esc(loc)}</description>\\n  </item>\\n`;\n}\nconst CC = '</channel>';\nconst ci = rssXml.lastIndexOf(CC);\n// Insert new items BEFORE existing ones so RSS readers see newest first\nconst firstItem = rssXml.indexOf('<item>');\nconst ins = firstItem === -1 ? ci : firstItem;\nconst newRss = ci === -1 ? rssXml : rssXml.slice(0, ins) + newItems + rssXml.slice(ins);\n\nreturn [{\n  json: {\n    journal_b64:   Buffer.from(newJournal).toString('base64'),\n    rss_b64:       Buffer.from(newRss).toString('base64'),\n    count:         dispatches.length,\n    total_entries: allLis.length,\n    preview:       dispatches.map(d => d.entry.body.slice(0, 80)).join(' | ')\n  }\n}];\n"
+      },
+      "id": "ca000001-0000-0000-0000-000000000010",
+      "name": "Render Journal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2040,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://api.telegram.org/bot' + $env['TELEGRAM_BOT_TOKEN'] + '/sendMessage' }}",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ chat_id: '1576920275', text: '\\uD83D\\uDEF6 ' + $('Build All Files').first().json.count + ' dispatch(es) published to the journal:\\n\\n' + $('Build All Files').first().json.preview }) }}",
+        "options": {}
+      },
+      "id": "ca000001-0000-0000-0000-000000000016",
+      "name": "Telegram Stan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3580,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.github.com/repos/berteloot/Canoe-Verendrye/contents/journal-entries/published-ids.json?ref=main",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env['GITHUB_CANOE_TOKEN'] }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ca000001-0000-0000-0000-000000000018",
+      "name": "Fetch Published IDs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        280,
+        240
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      },
+      "id": "ca000001-0000-0000-0000-000000000020",
+      "name": "Merge for Filter",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        500,
+        340
+      ]
+    },
+    {
+      "id": "ca000001-0000-0000-0000-000000000021",
+      "name": "Build All Files",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2260,
+        400
+      ],
+      "parameters": {
+        "jsCode": "\nconst rj   = $('Render Journal').first().json;\nconst fp   = $('Apply GPS + Reassemble').first().json;\nconst pids = $('Fetch Published IDs').first().json;\n\n// Decode base64 → UTF-8 (Buffer is available in Code nodes)\nconst journalHtml = Buffer.from(rj.journal_b64, 'base64').toString('utf8');\nconst rssXml      = Buffer.from(rj.rss_b64, 'base64').toString('utf8');\n\n// Update published IDs\nlet existing = [];\nif (pids && pids.content) {\n  try { existing = JSON.parse(Buffer.from(pids.content.replace(/\\s/g,''), 'base64').toString()).ids || []; } catch(e) {}\n}\nconst newIds = fp.dispatches.flatMap(d => [d.raw_mid, ...(d.extra_mids || [])]).filter(Boolean);\nconst merged = Array.from(new Set([...existing, ...newIds])).slice(-500);\nconst idsContent = JSON.stringify({ ids: merged, updated_at: new Date().toISOString() }, null, 2) + '\\n';\n\n// Build tree array with decoded UTF-8 content\nconst tree = [\n  { path: 'journal.html',                        mode: '100644', type: 'blob', content: journalHtml },\n  { path: 'rss.xml',                              mode: '100644', type: 'blob', content: rssXml },\n  { path: 'journal-entries/published-ids.json',  mode: '100644', type: 'blob', content: idsContent },\n  ...fp.dispatches.map(d => ({\n    path: `journal-entries/${d.entry.id}.json`,\n    mode: '100644', type: 'blob',\n    content: JSON.stringify(d.entry, null, 2) + '\\n'\n  }))\n];\n\nconst count = fp.dispatches.length;\nconst preview = fp.dispatches.map(d => d.entry.body.slice(0, 60)).join(' | ');\nreturn [{ json: { tree, count, preview, commit_message: `Pierre: ${count} new dispatch(es) from the trail` } }];\n"
+      }
+    },
+    {
+      "id": "ca000001-0000-0000-0000-000000000022",
+      "name": "Get HEAD Commit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2480,
+        400
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.github.com/repos/berteloot/Canoe-Verendrye/git/refs/heads/main",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env['GITHUB_CANOE_TOKEN'] }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ca000001-0000-0000-0000-000000000023",
+      "name": "Get Base Tree",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2700,
+        400
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.github.com/repos/berteloot/Canoe-Verendrye/git/commits/' + $json.object.sha }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env['GITHUB_CANOE_TOKEN'] }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ca000001-0000-0000-0000-000000000024",
+      "name": "Create Tree",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2920,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.github.com/repos/berteloot/Canoe-Verendrye/git/trees",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env['GITHUB_CANOE_TOKEN'] }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ base_tree: $('Get Base Tree').first().json.tree.sha, tree: $('Build All Files').first().json.tree }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "ca000001-0000-0000-0000-000000000025",
+      "name": "Create Commit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3140,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.github.com/repos/berteloot/Canoe-Verendrye/git/commits",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env['GITHUB_CANOE_TOKEN'] }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ message: $('Build All Files').first().json.commit_message, tree: $json.sha, parents: [$('Get HEAD Commit').first().json.object.sha] }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "ca000001-0000-0000-0000-000000000026",
+      "name": "Update Branch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3360,
+        400
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.github.com/repos/berteloot/Canoe-Verendrye/git/refs/heads/main",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env['GITHUB_CANOE_TOKEN'] }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ sha: $json.sha, force: false }) }}",
+        "options": {}
+      }
+    },
+    {
+      "name": "Split For Fetch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        440
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Split dispatches into one item per dispatch so we can fetch each full body\nconst fp = $('Filter + Parse Dispatches').first().json;\nreturn fp.dispatches.map(d => ({\n  json: {\n    encoded_mid: encodeURIComponent(d.raw_mid),\n    raw_mid: d.raw_mid,\n    entry: d.entry,\n  }\n}));"
+      },
+      "id": "042cb0b6-7273-44d2-98f2-0f29d121c2ef"
+    },
+    {
+      "name": "Fetch Full Body",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1160,
+        440
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.agentmail.to/v0/inboxes/pierre@agentmail.to/messages/{{ $json.encoded_mid }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env['AGENTMAIL_API_KEY'] }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "e6b61522-0884-4f95-8b0e-9b6c6d3a9a0b"
+    },
+    {
+      "name": "Apply GPS + Reassemble",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1380,
+        440
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const LATLON = /Lat\\s+(-?\\d+\\.\\d+)[\\s,]+Lon\\s+(-?\\d+\\.\\d+)/i;\nconst BOIL = /\\n*(?:View the location or send a reply|Do not reply directly to this message|This message was sent to you using the inReach|Please Note: Replies to this email are not answered).*/is;\nconst SIG  = /\\n+(?:Sent from (?:my )?Garmin[^\\n]*|[^\\n]* sent this message from[^\\n]*)$/im;\n\nconst fullBodies = $input.all();\nconst splitItems = $('Split For Fetch').all();\nconst fpData     = $('Filter + Parse Dispatches').first().json;\n\nconst dispatches = fullBodies.map((item, i) => {\n  const orig  = splitItems[i]?.json || {};\n  const full  = item.json.text || item.json.extracted_text || '';\n  const entry = { ...orig.entry };\n\n  // Extract GPS from full body BEFORE stripping boilerplate\n  const ll = LATLON.exec(full);\n  if (ll) {\n    entry.lat = parseFloat(ll[1]);\n    entry.lon = parseFloat(ll[2]);\n  } else {\n    delete entry.lat;\n    delete entry.lon;\n  }\n\n  // Use full body text for a cleaner message (strips Garmin boilerplate)\n  if (full) {\n    const clean = full.replace(SIG, '').replace(BOIL, '').trim();\n    if (clean) entry.body = clean;\n  }\n\n  return { raw_mid: orig.raw_mid, entry };\n});\n\nreturn [{ json: { dispatches, count: dispatches.length, published_ids_sha: fpData.published_ids_sha } }];"
+      },
+      "id": "46957b80-e785-4597-91aa-c329a68d270b"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch AgentMail",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Published IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch AgentMail",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Published IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch AgentMail": {
+      "main": [
+        [
+          {
+            "node": "Merge for Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Published IDs": {
+      "main": [
+        [
+          {
+            "node": "Merge for Filter",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge for Filter": {
+      "main": [
+        [
+          {
+            "node": "Filter + Parse Dispatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter + Parse Dispatches": {
+      "main": [
+        [
+          {
+            "node": "Any New Dispatches?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any New Dispatches?": {
+      "main": [
+        [
+          {
+            "node": "Split For Fetch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Fetch journal.html": {
+      "main": [
+        [
+          {
+            "node": "Merge Fetches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch rss.xml": {
+      "main": [
+        [
+          {
+            "node": "Merge Fetches",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Fetches": {
+      "main": [
+        [
+          {
+            "node": "Render Journal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Journal": {
+      "main": [
+        [
+          {
+            "node": "Build All Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build All Files": {
+      "main": [
+        [
+          {
+            "node": "Get HEAD Commit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get HEAD Commit": {
+      "main": [
+        [
+          {
+            "node": "Get Base Tree",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Base Tree": {
+      "main": [
+        [
+          {
+            "node": "Create Tree",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Tree": {
+      "main": [
+        [
+          {
+            "node": "Create Commit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Commit": {
+      "main": [
+        [
+          {
+            "node": "Update Branch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Branch": {
+      "main": [
+        [
+          {
+            "node": "Telegram Stan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 1h": {
+      "main": [
+        [
+          {
+            "node": "Fetch AgentMail",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Published IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split For Fetch": {
+      "main": [
+        [
+          {
+            "node": "Fetch Full Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Full Body": {
+      "main": [
+        [
+          {
+            "node": "Apply GPS + Reassemble",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply GPS + Reassemble": {
+      "main": [
+        [
+          {
+            "node": "Fetch journal.html",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch rss.xml",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  }
+}
