@@ -162,11 +162,23 @@ The canonical workflow export lives in `n8n-workflow-garmin-dispatch.json`.
 
 ### GitHub auth
 
-The workflow authenticates with `GITHUB_CANOE_TOKEN` from
-`/home/ec2-user/n8n/.env` on the Lightsail box. The container bakes env at
-start: after changing it, run `cd /home/ec2-user/n8n && sudo docker compose
-up -d` to recreate. Fine-grained PATs expire — the July 2026 outage was an
-expired 30-day PAT. Use a long-lived token and calendar the renewal.
+**Canonical source:** `GITHUB_CANOE_TOKEN` in `/home/ec2-user/pierre/.env`
+(same key as NYTRO `.env`). Do not edit the n8n copy by hand.
+
+`clients/Canoe/scripts/canoe_watchdog.py` runs every 30 minutes on
+Lightsail and:
+
+1. Copies the token from `pierre/.env` into `n8n/.env` and recreates the
+   n8n container when it changes.
+2. Probes GitHub write access (`POST /git/trees`) so an expired PAT is
+   caught before the hourly workflow hits Create Tree.
+3. Watches for stale or failed n8n executions (belt-and-suspenders with
+   the workflow error alert).
+
+Fine-grained PATs expire. Use a long-lived token with **Contents: Read and
+write** on `berteloot/Canoe-Verendrye`. When rotating, update
+`GITHUB_CANOE_TOKEN` in NYTRO `.env` and `/home/ec2-user/pierre/.env`
+only; the watchdog syncs n8n within 30 minutes.
 
 ### Trigger a run manually
 

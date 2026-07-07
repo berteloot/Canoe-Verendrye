@@ -1,8 +1,7 @@
 # scripts/
 
-Two scripts. One is a pure file-system renderer (safe to run anywhere),
-the other reaches across the network and writes to git (intended for
-the Lightsail box).
+Three scripts. The renderer is safe to run anywhere; the other two are
+Lightsail-side operations.
 
 ## `render-journal.py`
 
@@ -63,3 +62,23 @@ and extracts the lat/lon into the JSON entry. Body keeps just the prose.
 2. Run `python3 scripts/pull_dispatches.py` locally.
 3. Verify a JSON file appears in `journal-entries/` and `journal.html`
    was updated. Don't push — set `CANOE_AUTOCOMMIT=0` for the local test.
+
+## `canoe_watchdog.py`
+
+Runs on **Lightsail** every 30 minutes (cron). Keeps the journal pipeline
+healthy:
+
+- Syncs `GITHUB_CANOE_TOKEN` from `/home/ec2-user/pierre/.env` (canonical)
+  into `/home/ec2-user/n8n/.env` and recreates the n8n container on change.
+- Probes GitHub write access so an expired PAT is caught before the hourly
+  n8n workflow fails at Create Tree.
+- Alerts via Telegram if the dispatch workflow is stale, errored, or n8n is
+  unreachable.
+
+```cron
+20,50 * * * * cd /home/ec2-user/pierre && /usr/bin/python3 clients/Canoe/scripts/canoe_watchdog.py >> logs/canoe_watchdog.log 2>&1
+```
+
+When rotating the GitHub PAT, update `GITHUB_CANOE_TOKEN` in NYTRO `.env`
+and `/home/ec2-user/pierre/.env` only. Requires `N8N_API_KEY`,
+`TELEGRAM_BOT_TOKEN`, and `GITHUB_CANOE_TOKEN` in pierre `.env`.
