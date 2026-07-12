@@ -42,6 +42,14 @@
 
   map.fitBounds(L.latLngBounds(allLatLngs), { padding: [20, 20] });
 
+  // Official SEPAQ published route, dashed grey, off by default (toggle to compare)
+  if (T.sepaqRoute && T.sepaqRoute.length) {
+    const sepaq = L.polyline(T.sepaqRoute, {
+      color: '#555', weight: 2, opacity: 0.8, dashArray: '4 6', lineCap: 'round',
+    }).bindPopup('<strong>Official SEPAQ route</strong><br>The published loop (69 km). Toggle against our GPS track.');
+    overlays['<span style="color:#555;font-weight:700">┈</span> SEPAQ official route'] = sepaq;
+  }
+
   L.control.layers(
     { 'Satellite': satellite, 'Street map': osm },
     overlays,
