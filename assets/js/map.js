@@ -32,9 +32,15 @@
   const allLatLngs = [];
   T.days.forEach((d, i) => {
     const color = DAY_COLORS[i % DAY_COLORS.length];
+    const np = (T.portages || []).filter((p) => p.day === d.day).length;
     const line = L.polyline(d.coords, {
       color, weight: 3.5, opacity: 0.9, lineCap: 'round', lineJoin: 'round',
-    }).bindPopup(`<strong>Day ${d.day} · ${d.date}</strong><br>${d.km} km paddled`);
+    }).bindPopup(
+      `<strong>Day ${d.day} · ${d.date}</strong><br>` +
+      `${d.km} km · ${np} portage${np === 1 ? '' : 's'}<br>` +
+      `moving ${d.moving} of ${d.elapsed}<br>` +
+      `avg ${d.avg} km/h · max ${d.max} km/h`
+    );
     line.addTo(map);
     overlays[`<span style="color:${color};font-weight:700">■</span> Day ${d.day} · ${d.km} km`] = line;
     allLatLngs.push(...d.coords);
