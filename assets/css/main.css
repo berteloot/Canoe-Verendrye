@@ -902,6 +902,13 @@ font[style*="background"] { background: transparent !important; }
   letter-spacing: 0.01em;
 }
 .gallery__day:first-child { margin-top: 0; }
+.gallery__note {
+  column-span: all;
+  margin: 0 0 1rem;
+  max-width: 60ch;
+  color: rgba(28,28,28,0.7);
+  font-size: 0.95rem;
+}
 .gallery__item {
   break-inside: avoid;
   margin-bottom: 0.75rem;
