@@ -68,6 +68,23 @@
     `<strong>${T.putin.label}</strong><br>Put-in and take-out, near Lac Rousine`
   );
 
+  // Portage markers (detected from the GPS carries), coloured by day
+  const portsByDay = {};
+  (T.portages || []).forEach((p) => {
+    portsByDay[p.day] = (portsByDay[p.day] || 0) + 1;
+    const color = DAY_COLORS[(p.day - 1) % DAY_COLORS.length];
+    L.marker(p.coords, {
+      icon: L.divIcon({
+        className: 'wp wp--portage',
+        html: `<div title="Portage" style="width:12px;height:12px;background:#6a4a2a;border:2px solid #fff;transform:rotate(45deg);box-shadow:0 1px 3px rgba(0,0,0,.5)"></div>`,
+        iconSize: [12, 12], iconAnchor: [6, 6],
+      }),
+      zIndexOffset: 800,
+    }).addTo(map).bindPopup(
+      `<strong>Portage · Day ${p.day}</strong><br>≈ ${p.len} m carry`
+    );
+  });
+
   // Numbered camp markers
   T.camps.forEach((c) => {
     L.marker(c.coords, {
@@ -88,10 +105,11 @@
     const div = L.DomUtil.create('div', 'map-legend-box');
     div.innerHTML =
       '<div style="background:rgba(255,255,255,.92);padding:8px 10px;border-radius:4px;font:12px/1.5 Inter,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.2)">' +
-      T.days.map((d, i) =>
-        `<div><span style="color:${DAY_COLORS[i]};font-weight:700">━</span> Day ${d.day} (${d.date.replace(/^[A-Za-z]+ /, '')}) · ${d.km} km</div>`
-      ).join('') +
-      '<div style="margin-top:4px"><span style="color:#C8392E">★</span> put-in / take-out &nbsp; <span style="color:#1E3A2B;font-weight:700">●</span> camp</div>' +
+      T.days.map((d, i) => {
+        const np = portsByDay[d.day] || 0;
+        return `<div><span style="color:${DAY_COLORS[i]};font-weight:700">━</span> Day ${d.day} (${d.date.replace(/^[A-Za-z]+ /, '')}) · ${d.km} km · ${np} portage${np === 1 ? '' : 's'}</div>`;
+      }).join('') +
+      '<div style="margin-top:4px"><span style="color:#C8392E">★</span> put-in / take-out &nbsp; <span style="color:#1E3A2B;font-weight:700">●</span> camp &nbsp; <span style="color:#6a4a2a;font-weight:700">◆</span> portage</div>' +
       '</div>';
     return div;
   };
