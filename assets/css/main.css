@@ -893,6 +893,15 @@ font[style*="background"] { background: transparent !important; }
   column-gap: 0.75rem;
   margin-top: 2rem;
 }
+.gallery__day {
+  column-span: all;
+  margin: 1.5rem 0 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule, rgba(0,0,0,0.12));
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+.gallery__day:first-child { margin-top: 0; }
 .gallery__item {
   break-inside: avoid;
   margin-bottom: 0.75rem;
@@ -902,6 +911,7 @@ font[style*="background"] { background: transparent !important; }
   position: relative;
   background: var(--forest);
 }
+.gallery__item img { height: auto; }
 .gallery__item img {
   width: 100%;
   display: block;

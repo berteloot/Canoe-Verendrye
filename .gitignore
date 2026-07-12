@@ -8,3 +8,6 @@ node_modules/
 .claude/
 subscribers.json
 sent_dispatches.json
+
+# Photo originals: kept in Dropbox, not deployed (only the optimized assets/img/gallery/ ship)
+images/Trip/
