@@ -38,8 +38,7 @@
     }).bindPopup(
       `<strong>Day ${d.day} · ${d.date}</strong><br>` +
       `${d.km} km · ${np} portage${np === 1 ? '' : 's'}<br>` +
-      `moving ${d.moving} of ${d.elapsed}<br>` +
-      `avg ${d.avg} km/h · max ${d.max} km/h`
+      `moving ${d.moving} · avg ${d.avg} km/h · max ${d.max} km/h`
     );
     line.addTo(map);
     overlays[`<span style="color:${color};font-weight:700">■</span> Day ${d.day} · ${d.km} km`] = line;
