@@ -1,95 +1,91 @@
 /* ============================================================
    Route map — Petite boucle Chochocouane n° 61
    ------------------------------------------------------------
-   Réserve faunique La Vérendrye · SEPAQ canoe-camping circuit
-   The interactive map below uses the OFFICIAL SEPAQ topographic
-   map as a georeferenced overlay on OpenStreetMap. The route,
-   portages, campsites and kilometre markers visible on the
-   overlay are the real published SEPAQ data.
-
-   Image bounds were derived from the GeoPDF by GDAL:
-     gdal_translate → GeoTIFF (UTM zone 18N, NAD83)
-     gdalwarp -t_srs EPSG:4326 → reproject + crop to NEATLINE
-     gdal_translate -of PNG → image overlay
-   The image is in EPSG:4326 (lat/lon) so Leaflet's
-   L.imageOverlay aligns it pixel-accurate on the OSM tiles.
+   The REAL paddled route: four daily GPS tracks from Stan's
+   Garmin (window.TRIP_TRACK, see assets/js/trip-track.js),
+   drawn over Esri satellite / OSM, one colour per day, with
+   the three wilderness camps numbered and matched to their
+   SEPAQ site.
    ============================================================ */
 
 (function () {
   const el = document.getElementById('map');
-  if (!el || typeof L === 'undefined') return;
+  if (!el || typeof L === 'undefined' || !window.TRIP_TRACK) return;
 
-  // Bounds of the SEPAQ overlay in WGS84
-  // (extracted from the georeferenced PDF NEATLINE via GDAL)
-  const overlayBounds = [
-    [47.6289795, -77.2065843], // SW
-    [47.8286717, -76.9550771], // NE
-  ];
+  const T = window.TRIP_TRACK;
+  const DAY_COLORS = ['#C8392E', '#E08A1E', '#2E7D5B', '#2C6E9E'];
 
-  const center = [
-    (overlayBounds[0][0] + overlayBounds[1][0]) / 2,
-    (overlayBounds[0][1] + overlayBounds[1][1]) / 2,
-  ];
+  const map = L.map('map', { scrollWheelZoom: false });
 
-  const map = L.map('map', {
-    center,
-    zoom: 12,
-    scrollWheelZoom: false,
-  });
+  const satellite = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom: 19, attribution: 'Imagery © Esri, Maxar, Earthstar Geographics' }
+  ).addTo(map);
 
   const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   });
 
-  const satellite = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    {
-      maxZoom: 19,
-      attribution: 'Imagery © Esri · Source: Esri, Maxar, GeoEye, Earthstar Geographics',
-    }
-  );
+  // Draw each day's track, collect for bounds + layer toggle
+  const overlays = {};
+  const allLatLngs = [];
+  T.days.forEach((d, i) => {
+    const color = DAY_COLORS[i % DAY_COLORS.length];
+    const line = L.polyline(d.coords, {
+      color, weight: 3.5, opacity: 0.9, lineCap: 'round', lineJoin: 'round',
+    }).bindPopup(`<strong>Day ${d.day} · ${d.date}</strong><br>${d.km} km paddled`);
+    line.addTo(map);
+    overlays[`<span style="color:${color};font-weight:700">■</span> Day ${d.day} · ${d.km} km`] = line;
+    allLatLngs.push(...d.coords);
+  });
 
-  // Start on satellite
-  satellite.addTo(map);
+  map.fitBounds(L.latLngBounds(allLatLngs), { padding: [20, 20] });
 
   L.control.layers(
     { 'Satellite': satellite, 'Street map': osm },
-    null,
+    overlays,
     { collapsed: false, position: 'topright' }
   ).addTo(map);
 
-  // Fit to the map area
-  map.fitBounds(overlayBounds, { padding: [10, 10] });
-
-  // Real SEPAQ GPX route
-  new L.GPX('assets/gpx/route.gpx', {
-    async: true,
-    polyline_options: {
-      color: '#C8392E',
-      weight: 3,
-      opacity: 0.85,
-      lineCap: 'round',
-      lineJoin: 'round',
-    },
-    marker_options: {
-      startIconUrl: null,
-      endIconUrl: null,
-      shadowUrl: null,
-      wptIconUrls: { '': null },
-    },
-  }).addTo(map);
-
-  // Put-in marker
-  const putIn = [47.718, -77.140];
-  L.marker(putIn, {
+  // Put-in / take-out star
+  L.marker(T.putin.coords, {
     icon: L.divIcon({
       className: 'wp wp--start',
-      html: '<div style="background:#C8392E;color:#fff;font:600 11px/24px Inter,sans-serif;width:24px;height:24px;border-radius:50%;text-align:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)">★</div>',
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
+      html: '<div style="background:#C8392E;color:#fff;font:600 13px/26px Inter,sans-serif;width:26px;height:26px;border-radius:50%;text-align:center;border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5)">★</div>',
+      iconSize: [26, 26], iconAnchor: [13, 13],
     }),
-  })
-    .addTo(map)
-    .bindPopup('<strong>Départ / Arrivée — Lac Rousine</strong><br>Put-in and take-out parking lot');
+    zIndexOffset: 1000,
+  }).addTo(map).bindPopup(
+    `<strong>${T.putin.label}</strong><br>Put-in and take-out, near Lac Rousine`
+  );
+
+  // Numbered camp markers
+  T.camps.forEach((c) => {
+    L.marker(c.coords, {
+      icon: L.divIcon({
+        className: 'wp wp--camp',
+        html: `<div style="background:#1E3A2B;color:#fff;font:700 13px/26px Inter,sans-serif;width:26px;height:26px;border-radius:50% 50% 50% 2px;text-align:center;border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5)">${c.n}</div>`,
+        iconSize: [26, 26], iconAnchor: [13, 26],
+      }),
+      zIndexOffset: 900,
+    }).addTo(map).bindPopup(
+      `<strong>Camp ${c.n} · ${c.date}</strong><br>SEPAQ site ${c.sepaq}<br><span style="color:#666">${c.area}</span>`
+    );
+  });
+
+  // Small legend
+  const legend = L.control({ position: 'bottomleft' });
+  legend.onAdd = function () {
+    const div = L.DomUtil.create('div', 'map-legend-box');
+    div.innerHTML =
+      '<div style="background:rgba(255,255,255,.92);padding:8px 10px;border-radius:4px;font:12px/1.5 Inter,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.2)">' +
+      T.days.map((d, i) =>
+        `<div><span style="color:${DAY_COLORS[i]};font-weight:700">━</span> Day ${d.day} (${d.date.replace(/^[A-Za-z]+ /, '')}) · ${d.km} km</div>`
+      ).join('') +
+      '<div style="margin-top:4px"><span style="color:#C8392E">★</span> put-in / take-out &nbsp; <span style="color:#1E3A2B;font-weight:700">●</span> camp</div>' +
+      '</div>';
+    return div;
+  };
+  legend.addTo(map);
 })();

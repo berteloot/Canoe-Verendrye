@@ -139,7 +139,7 @@
       <figure class="gallery__item" data-caption="The rain cleared into this.">
         <img src="assets/img/gallery/trip-11-thumb.jpg" data-full="assets/img/gallery/trip-11.jpg" width="675" height="900" loading="lazy" decoding="async" alt="A rainbow arcing over the spruce treeline at dusk in soft pink light.">
       </figure>
-      <figure class="gallery__item" data-caption="First camp. Worth the wet day to get here.">
+      <figure class="gallery__item" data-caption="Sunset after a day of rain. Our first camp.">
         <img src="assets/img/gallery/trip-12-thumb.jpg" data-full="assets/img/gallery/trip-12.jpg" width="900" height="675" loading="lazy" decoding="async" alt="Orange and lavender sunset clouds reflected in a calm lake with a rocky shore in front.">
       </figure>
       <figure class="gallery__item" data-caption="Day one, done.">
@@ -148,6 +148,9 @@
 
       <h3 class="gallery__day">Day 2 · July 9</h3>
 
+      <figure class="gallery__item" data-caption="A moose and her calf on the far shore, the morning of day two.">
+        <img src="assets/img/gallery/trip-moose-thumb.jpg" data-full="assets/img/gallery/trip-moose.jpg" width="900" height="414" loading="lazy" decoding="async" alt="A cow moose and her calf walking the far shore of a lake, dark spruce forest behind them.">
+      </figure>
       <figure class="gallery__item" data-caption="Morning two. Flat water and no one else for miles.">
         <img src="assets/img/gallery/trip-14-thumb.jpg" data-full="assets/img/gallery/trip-14.jpg" width="675" height="900" loading="lazy" decoding="async" alt="The red canoe pulled up on a rocky shore of a still lake on a misty grey morning.">
       </figure>
@@ -272,6 +275,14 @@
 
   items = Array.from(gallery.querySelectorAll('.gallery__item'));
   items.forEach(function (item, i) {
+    // Show the caption under each photo (from data-caption), not just in the lightbox
+    var cap = item.dataset.caption;
+    if (cap && !item.querySelector('.gallery__caption')) {
+      var fc = document.createElement('figcaption');
+      fc.className = 'gallery__caption';
+      fc.textContent = cap;
+      item.appendChild(fc);
+    }
     item.addEventListener('click', function () { open(i); });
   });
 
