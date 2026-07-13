@@ -44,6 +44,9 @@
       max-width: 640px;
       margin: 1rem 0;
     }
+    /* The hidden attribute must win over the display:flex above (author styles
+       otherwise override the UA [hidden] rule, leaving the panel always visible). */
+    .contact-success[hidden] { display: none; }
     .contact-success svg { flex: 0 0 auto; margin-top: .1rem; }
     .contact-success strong { display: block; font-size: 1.05rem; margin-bottom: .2rem; }
     .contact-success a { color: #1E3A2B; text-decoration: underline; }
