@@ -19,7 +19,7 @@
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_US">
   <meta property="og:image" content="https://canoe-verendrye.berteloot.org/assets/img/hero-mad-river.jpg">
-  <meta property="og:image:alt" content="A red Mad River Explorer 17 canoe on a Québec lake at first light.">
+  <meta property="og:image:alt" content="Violette and Stan paddling a red canoe across a misty lake in La Vérendrye.">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
@@ -166,7 +166,7 @@
     </div>
   </div>
 
-  <div class="hero__credit" translate="no">Photo: the Mad River Explorer 17 in service, May 2021</div>
+  <div class="hero__credit" translate="no">Violette &amp; Stan on the Chochocouane, July 2026</div>
 </section>
 
 <!-- ===================== STATS ===================== -->
@@ -297,49 +297,6 @@
 </footer>
 
 <script src="assets/js/main.js"></script>
-
-<!-- Subscribe popup -->
-<div class="subscribe-popup" id="subscribe-popup" role="dialog" aria-modal="true" aria-label="Follow the trip">
-  <div class="subscribe-popup__box">
-    <button class="subscribe-popup__close" aria-label="Close">&#215;</button>
-    <p class="subscribe-popup__eyebrow">The Red Canoe · Jul 7–11</p>
-    <h2 class="subscribe-popup__title">Follow the trip by email</h2>
-    <p class="subscribe-popup__sub">Get each satellite dispatch delivered to your inbox. Free, no spam.</p>
-    <form class="subscribe-popup__form" action="https://api.follow.it/subscription-form/Vis4aWtCanlvdmVtL1p0cFRVZ1pWVGdtMWpmVG9rK3ZPN3hTNzYrZUhydHBUbkltSklaVFJYMGlmU0s4WmRGSUVQeGZXU01Sa0o0VWFhSG1vTU41ZFdCaThLc2l5dDMxc1h2NTNLMmcxWTBRdksvdVhWbEtidElpdzUvc1IraCt8M0VEME9PQzBlNVVHb29nb005Q2p1VXdkc3oxNUZhZndoQ2hzNEZhRjloUT0=/8" method="post">
-      <input type="email" name="email" required placeholder="your@email.com">
-      <button type="submit">Subscribe</button>
-    </form>
-    <button class="subscribe-popup__skip" id="popup-skip">No thanks</button>
-  </div>
-</div>
-
-<script>
-(function () {
-  var KEY = 'rc_popup_dismissed';
-  var popup = document.getElementById('subscribe-popup');
-  if (!popup || sessionStorage.getItem(KEY)) return;
-
-  function close() {
-    popup.classList.remove('is-open');
-    sessionStorage.setItem(KEY, '1');
-  }
-
-  setTimeout(function () {
-    popup.classList.add('is-open');
-  }, 8000);
-
-  popup.querySelector('.subscribe-popup__close').addEventListener('click', close);
-  popup.querySelector('#popup-skip').addEventListener('click', close);
-  popup.addEventListener('click', function (e) { if (e.target === popup) close(); });
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && popup.classList.contains('is-open')) close();
-  });
-  popup.querySelector('form').addEventListener('submit', function () {
-    sessionStorage.setItem(KEY, '1');
-    setTimeout(close, 1500);
-  });
-}());
-</script>
 
 <div id="google_translate_element" aria-hidden="true"></div>
 <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>

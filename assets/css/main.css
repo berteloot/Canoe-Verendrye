@@ -231,9 +231,9 @@ font[style*="background"] { background: transparent !important; }
   content: "";
   position: absolute;
   inset: 0;
-  background-image: url("../img/hero-mad-river.jpg");
+  background-image: url("../img/hero-paddling.jpg");
   background-size: cover;
-  background-position: center 55%;
+  background-position: center 42%;
   z-index: -2;
 }
 
