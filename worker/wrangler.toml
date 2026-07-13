@@ -5,7 +5,7 @@ account_id = "03a83d331672a330ee985b6f3636b24c"
 
 [vars]
 ALLOWED_ORIGIN = "https://canoe-verendrye.berteloot.org"
-MAIL_TO = "berteloot@gmail.com, stan@berteloot.org"
+MAIL_TO = "berteloot@gmail.com"
 MAIL_FROM = "Canoe Contact <comments@berteloot.org>"
 
 # Secrets (set via `wrangler secret put`):
