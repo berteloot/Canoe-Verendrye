@@ -44,9 +44,11 @@
       max-width: 640px;
       margin: 1rem 0;
     }
-    /* The hidden attribute must win over the display:flex above (author styles
-       otherwise override the UA [hidden] rule, leaving the panel always visible). */
+    /* The hidden attribute must win over the display rules above (author styles
+       otherwise override the UA [hidden] rule). Without these the success panel
+       shows on every load, and the form won't hide after a successful send. */
     .contact-success[hidden] { display: none; }
+    #contact-form[hidden] { display: none; }
     .contact-success svg { flex: 0 0 auto; margin-top: .1rem; }
     .contact-success strong { display: block; font-size: 1.05rem; margin-bottom: .2rem; }
     .contact-success a { color: #1E3A2B; text-decoration: underline; }

@@ -136,9 +136,11 @@ export default {
       `<strong>UA:</strong> ${escapeHtml(ua)}</p>` +
       `<p style="white-space:pre-wrap;">${escapeHtml(message)}</p>`;
 
+    // MAIL_TO may be a comma-separated list; Resend accepts an array of recipients.
+    const recipients = env.MAIL_TO.split(",").map(s => s.trim()).filter(Boolean);
     const emailBody = {
       from: env.MAIL_FROM,
-      to: env.MAIL_TO,
+      to: recipients,
       subject,
       text,
       html,
