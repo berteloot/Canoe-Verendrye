@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Get in touch · The Red Canoe · La Vérendrye 2026</title>
+  <meta name="description" content="Send Stan a message about the La Vérendrye canoe trip: the route, the gear, or planning your own paddle. Spam-protected contact form.">
+  <meta name="theme-color" content="#1E3A2B">
+  <meta name="author" content="Stan Berteloot">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://canoe-verendrye.berteloot.org/contact.html">
+
+  <!-- Open Graph -->
+  <meta property="og:site_name" content="The Red Canoe">
+  <meta property="og:title" content="Get in touch · The Red Canoe">
+  <meta property="og:description" content="Send Stan a message about the La Vérendrye canoe trip.">
+  <meta property="og:url" content="https://canoe-verendrye.berteloot.org/contact.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image" content="https://canoe-verendrye.berteloot.org/assets/img/hero-mad-river.jpg">
+  <meta property="og:image:alt" content="Violette and Stan paddling a red canoe across a misty lake in La Vérendrye.">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Get in touch · The Red Canoe">
+  <meta name="twitter:description" content="Send Stan a message about the La Vérendrye canoe trip.">
+  <meta name="twitter:image" content="https://canoe-verendrye.berteloot.org/assets/img/hero-mad-river.jpg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
+
+  <!-- Cloudflare Turnstile -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GXN3VF6T09"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-GXN3VF6T09');
+  </script>
+</head>
+<body>
+
+<!-- ===================== NAV ===================== -->
+<header class="nav">
+  <div class="nav__inner">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 64 32" aria-hidden="true">
+        <path d="M2 14 C 10 26, 54 26, 62 14 L 56 14 C 50 20, 14 20, 8 14 Z" fill="#C8392E"/>
+        <path d="M8 14 L 56 14" stroke="#7A1F18" stroke-width="1.2" fill="none"/>
+        <path d="M32 4 L 32 14" stroke="#3a2a1a" stroke-width="1.4"/>
+        <ellipse cx="32" cy="4" rx="2.5" ry="1" fill="#3a2a1a"/>
+      </svg>
+      <span class="brand__name">
+        The Red Canoe
+        <span class="brand__tag">Violette &amp; Stan · 2026</span>
+      </span>
+    </a>
+
+    <div class="lang-toggle" role="group" aria-label="Language" translate="no">
+      <button type="button" data-lang="en">EN</button>
+      <button type="button" data-lang="fr">FR</button>
+    </div>
+
+    <button class="nav__toggle" aria-label="Menu" aria-expanded="false">☰</button>
+
+    <nav class="nav__links">
+      <a href="index.html">Home</a>
+      <a href="index.html#film">Film</a>
+      <a href="itinerary.html">Route &amp; Map</a>
+      <a href="equipment.html">Equipment</a>
+      <a href="preparation.html">Preparation</a>
+      <a href="resources.html">Resources</a>
+      <a href="journal.html">Journal</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="contact.html" aria-current="page">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===================== CONTACT ===================== -->
+<section style="padding-top:3rem;">
+  <div class="container container--text">
+    <div class="section-head" style="text-align:left;">
+      <h4>Get in touch</h4>
+      <h2>Say hello.</h2>
+      <p style="margin:0;">
+        A question about the route, the gear, or planning your own paddle in La Vérendrye?
+        Send a note and it lands straight in Stan's inbox. Leave your email if you'd like a reply.
+      </p>
+    </div>
+
+    <!--
+      Form posts to the Cloudflare Worker at comments-api.berteloot.org.
+      The Worker verifies the Turnstile token and emails the message via Resend.
+      A hidden honeypot field ("bot-field") catches naive bots.
+    -->
+    <form
+      id="contact-form"
+      class="comments__form"
+      name="canoe-contact"
+      method="POST"
+      action="https://comments-api.berteloot.org/"
+    >
+      <p style="display:none;"><label>Don't fill this out: <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+
+      <div>
+        <label for="c-name">Your name</label>
+        <input id="c-name" name="name" type="text" maxlength="60" required autocomplete="name">
+      </div>
+
+      <div>
+        <label for="c-email">Your email <span style="font-weight:400; opacity:.7;">(optional, for a reply)</span></label>
+        <input id="c-email" name="email" type="email" maxlength="120" autocomplete="email" placeholder="you@example.com">
+      </div>
+
+      <div>
+        <label for="c-message">Your message</label>
+        <textarea id="c-message" name="message" maxlength="2000" required placeholder="Loved the film. We're thinking about paddling n° 61 next summer and wondered..."></textarea>
+      </div>
+
+      <div class="cf-turnstile"
+           data-sitekey="0x4AAAAAADUDxLtb-NXuVC76"
+           data-theme="light"
+           data-execution="execute"
+           data-callback="onTurnstileToken"
+           data-error-callback="onTurnstileError"></div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+        <p class="comments__note" id="contact-note">
+          <strong>Note:</strong> protected by a quick Cloudflare check. No account, no tracking beyond that.
+        </p>
+        <button class="btn" type="submit">Send →</button>
+      </div>
+    </form>
+
+    <p class="comments__alt" id="contact-alt">
+      Prefer regular email? Reach Stan at
+      <span class="js-email" data-u="stan" data-d="berteloot.org"></span>.
+    </p>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer">
+  <div class="container footer__inner">
+    <div class="footer__brand">
+      <svg viewBox="0 0 64 32" aria-hidden="true">
+        <path d="M2 14 C 10 26, 54 26, 62 14 L 56 14 C 50 20, 14 20, 8 14 Z" fill="#C8392E"/>
+        <path d="M32 4 L 32 14" stroke="#F5EFE0" stroke-width="1.4"/>
+      </svg>
+      <span>The Red Canoe · La Vérendrye 2026</span>
+    </div>
+    <div>
+      Built with paddles &amp; a laptop
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+<script src="assets/js/contact.js"></script>
+
+<div id="google_translate_element" aria-hidden="true"></div>
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+/* ============================================================
+   Contact form — frontend behavior
+   ------------------------------------------------------------
+   Posts to the Cloudflare Worker at comments-api.berteloot.org.
+   The Worker verifies the Turnstile token and emails the message
+   to Stan via Resend. See worker/index.js.
+
+   A honeypot field ("bot-field") catches naive bots. Turnstile
+   runs execute-on-submit so the token is always fresh.
+   ============================================================ */
+
+(function () {
+  const form = document.getElementById('contact-form');
+  if (!form) return;
+
+  const ENDPOINT = 'https://comments-api.berteloot.org/';
+  const note = document.getElementById('contact-note') || form.querySelector('.comments__note');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const originalNoteHtml = note ? note.innerHTML : '';
+
+  // Render obfuscated email addresses (bots can't scrape them from source).
+  document.querySelectorAll('.js-email').forEach(el => {
+    const u = el.dataset.u, d = el.dataset.d;
+    if (!u || !d) return;
+    const a = document.createElement('a');
+    a.href = 'mailto:' + u + '@' + d;
+    a.textContent = u + '@' + d;
+    el.replaceWith(a);
+  });
+
+  // Turnstile execute-on-submit: pendingData holds form values while we wait
+  // for a fresh token from Cloudflare (avoids expired-token errors).
+  let pendingData = null;
+
+  window.onTurnstileToken = async function (token) {
+    if (!pendingData) return;
+    const data = Object.assign({}, pendingData, { 'cf-turnstile-response': token });
+    pendingData = null;
+    await doPost(data);
+  };
+
+  window.onTurnstileError = function () {
+    pendingData = null;
+    setBusy(false);
+    flashNote('<strong>Security check failed.</strong> Try refreshing the page.');
+  };
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const data = Object.fromEntries(new FormData(form).entries());
+    if (!data.name || !data.message) return;
+
+    setBusy(true);
+    pendingData = data;
+
+    if (window.turnstile) {
+      // Execute triggers the challenge and fires onTurnstileToken with a fresh token.
+      window.turnstile.execute('.cf-turnstile');
+    } else {
+      // Turnstile script blocked by browser — submit without token (Worker rejects).
+      pendingData = null;
+      await doPost(data);
+    }
+  });
+
+  async function doPost(data) {
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok && body.ok) {
+        form.reset();
+        if (window.turnstile) window.turnstile.reset('.cf-turnstile');
+        flashNote('<strong>Message sent.</strong> Thanks for writing. Stan will read it and reply if you left an email.');
+      } else {
+        if (window.turnstile) window.turnstile.reset('.cf-turnstile');
+        if (body.error === 'captcha_failed' || body.error === 'missing_captcha') {
+          flashNote('<strong>Security check failed.</strong> Please refresh the page and try again.');
+        } else if (body.error === 'invalid_email') {
+          flashNote('<strong>That email looks off.</strong> Fix it, or leave it blank to send without a reply address.');
+        } else {
+          flashNote(`<strong>Couldn't send (${body.error || res.status}).</strong> Please try again in a moment.`);
+        }
+      }
+    } catch (err) {
+      flashNote('<strong>Network error.</strong> Check your connection and try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function setBusy(busy) {
+    if (!submitBtn) return;
+    submitBtn.disabled = busy;
+    submitBtn.textContent = busy ? 'Sending…' : 'Send →';
+  }
+
+  function flashNote(html) {
+    if (!note) return;
+    note.innerHTML = html;
+    clearTimeout(flashNote._t);
+    flashNote._t = setTimeout(() => { note.innerHTML = originalNoteHtml; }, 8000);
+  }
+})();

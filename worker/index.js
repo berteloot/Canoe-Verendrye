@@ -1,36 +1,26 @@
-// Comments form handler for canoe-verendrye.berteloot.org
+// Contact form handler for canoe-verendrye.berteloot.org
 //
-// Receives POST from tracking.html#comments, verifies the Cloudflare Turnstile
-// token, checks the secret code, emails the message to stan@berteloot.org via
-// Resend, and forwards a short message to the Garmin inReach via satellite email.
+// Receives POST from contact.html, verifies the Cloudflare Turnstile token,
+// and emails the message to stan@berteloot.org via Resend. If the visitor
+// leaves their email, it is set as the reply-to so Stan can answer directly.
+//
+// The trip is over, so there is no Garmin inReach forwarding and no secret
+// code. This is a plain, spam-protected "get in touch" form.
 //
 // Bindings expected (via wrangler.toml [vars] / secrets):
-//   TURNSTILE_SECRET     Turnstile secret key (set as secret)
-//   RESEND_API_KEY       Resend API key (set as secret)
-//   MAIL_TO              stan@berteloot.org
-//   MAIL_FROM            e.g. "Canoe Comments <comments@berteloot.org>"
-//   ALLOWED_ORIGIN       https://canoe-verendrye.berteloot.org
-//   GARMIN_PASSWORD      Secret code that unlocks Garmin forwarding (set as secret)
-//   GARMIN_INREACH_EMAIL Garmin inReach message email address (set as secret)
+//   TURNSTILE_SECRET   Turnstile secret key (set as secret)
+//   RESEND_API_KEY     Resend API key (set as secret)
+//   MAIL_TO            stan@berteloot.org
+//   MAIL_FROM          e.g. "Canoe Contact <comments@berteloot.org>"
+//   ALLOWED_ORIGIN     https://canoe-verendrye.berteloot.org
 
 const TURNSTILE_VERIFY = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 const RESEND_SEND = "https://api.resend.com/emails";
-const GARMIN_DELAY_MS = 400; // artificial delay on every password attempt
 
-// Timing-safe string comparison via HMAC to prevent timing attacks.
-async function safeMatch(a, b) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.generateKey(
-    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
-  );
-  const [sigA, sigB] = await Promise.all([
-    crypto.subtle.sign("HMAC", key, enc.encode(a)),
-    crypto.subtle.sign("HMAC", key, enc.encode(b)),
-  ]);
-  const ua = new Uint8Array(sigA), ub = new Uint8Array(sigB);
-  let diff = 0;
-  for (let i = 0; i < ua.length; i++) diff |= ua[i] ^ ub[i];
-  return diff === 0;
+// Loose email sanity check. We only use this to decide whether to set a
+// reply-to header, never to guarantee the address is deliverable.
+function looksLikeEmail(s) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }
 
 function corsHeaders(env) {
@@ -81,24 +71,24 @@ export default {
       return jsonResponse({ ok: false, error: "bad_request" }, 400, env);
     }
 
-    // Honeypot
+    // Honeypot: naive bots fill every field. Silently accept and drop.
     if (payload["bot-field"]) {
-      return jsonResponse({ ok: true }, 200, env); // silently accept
+      return jsonResponse({ ok: true }, 200, env);
     }
 
     const name = (payload.name || "").toString().trim();
+    const email = (payload.email || "").toString().trim();
     const message = (payload.message || "").toString().trim();
     const token = (payload["cf-turnstile-response"] || "").toString();
-    const garminCode = (payload["garmin_code"] || "").toString().trim();
 
     if (!name || name.length > 60) {
       return jsonResponse({ ok: false, error: "invalid_name" }, 400, env);
     }
-    if (!message || message.length > 800) {
+    if (!message || message.length > 2000) {
       return jsonResponse({ ok: false, error: "invalid_message" }, 400, env);
     }
-    if (!garminCode) {
-      return jsonResponse({ ok: false, error: "missing_code" }, 400, env);
+    if (email && (email.length > 120 || !looksLikeEmail(email))) {
+      return jsonResponse({ ok: false, error: "invalid_email" }, 400, env);
     }
     if (!token) {
       return jsonResponse({ ok: false, error: "missing_captcha" }, 400, env);
@@ -128,17 +118,33 @@ export default {
     // Send email via Resend
     const ua = request.headers.get("User-Agent") || "";
     const country = request.cf?.country || "??";
-    const subject = `Canoe note from ${name}`;
+    const subject = `Canoe site message from ${name}`;
+    const replyLine = email ? `Reply-to: ${email}\n` : "";
     const text =
       `From: ${name}\n` +
+      replyLine +
       `IP: ${ip} (${country})\n` +
       `UA: ${ua}\n\n` +
       `${message}\n`;
+    const replyHtml = email
+      ? `<strong>Reply-to:</strong> ${escapeHtml(email)}<br>`
+      : "";
     const html =
       `<p><strong>From:</strong> ${escapeHtml(name)}<br>` +
+      replyHtml +
       `<strong>IP:</strong> ${escapeHtml(ip)} (${escapeHtml(country)})<br>` +
       `<strong>UA:</strong> ${escapeHtml(ua)}</p>` +
       `<p style="white-space:pre-wrap;">${escapeHtml(message)}</p>`;
+
+    const emailBody = {
+      from: env.MAIL_FROM,
+      to: env.MAIL_TO,
+      subject,
+      text,
+      html,
+    };
+    // Set reply-to only when the visitor gave a valid address.
+    if (email) emailBody.reply_to = email;
 
     const sendRes = await fetch(RESEND_SEND, {
       method: "POST",
@@ -146,14 +152,7 @@ export default {
         "Authorization": `Bearer ${env.RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        from: env.MAIL_FROM,
-        to: env.MAIL_TO,
-        reply_to: env.MAIL_TO,
-        subject,
-        text,
-        html,
-      }),
+      body: JSON.stringify(emailBody),
     });
 
     if (!sendRes.ok) {
@@ -162,40 +161,6 @@ export default {
       return jsonResponse({ ok: false, error: "send_failed" }, 502, env);
     }
 
-    // Verify the secret code, then forward to the Garmin inReach.
-    const garminPassword = (env.GARMIN_PASSWORD || "").trim();
-    const garminEmail = (env.GARMIN_INREACH_EMAIL || "").trim();
-    // Always delay before checking — prevents timing-based enumeration.
-    await new Promise(r => setTimeout(r, GARMIN_DELAY_MS));
-    const codeCorrect = garminPassword && garminEmail &&
-      await safeMatch(garminCode, garminPassword);
-    if (!codeCorrect) {
-      return jsonResponse({ ok: false, error: "invalid_code" }, 403, env);
-    }
-
-    const prefix = `${name}: `;
-    const maxBody = 160 - prefix.length;
-    const garminBody = prefix + message.slice(0, maxBody > 0 ? maxBody : 0);
-    const garminRes = await fetch(RESEND_SEND, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: env.MAIL_FROM,
-        to: garminEmail,
-        subject: garminBody,
-        text: garminBody,
-      }),
-    });
-    const garminResText = await garminRes.text().catch(() => "");
-    if (!garminRes.ok) {
-      console.log("garmin forward error", garminRes.status, garminResText);
-    } else {
-      console.log("garmin forward ok", garminRes.status, garminResText.slice(0, 200));
-    }
-
-    return jsonResponse({ ok: true, garmin: garminRes.ok }, 200, env);
+    return jsonResponse({ ok: true }, 200, env);
   },
 };
