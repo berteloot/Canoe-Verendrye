@@ -16,6 +16,7 @@
   const ENDPOINT = 'https://comments-api.berteloot.org/';
   const note = document.getElementById('contact-note') || form.querySelector('.comments__note');
   const submitBtn = form.querySelector('button[type="submit"]');
+  const successPanel = document.getElementById('contact-success');
   const originalNoteHtml = note ? note.innerHTML : '';
 
   // Turnstile execute-on-submit: pendingData holds form values while we wait
@@ -48,9 +49,11 @@
       // Execute triggers the challenge and fires onTurnstileToken with a fresh token.
       window.turnstile.execute('.cf-turnstile');
     } else {
-      // Turnstile script blocked by browser — submit without token (Worker rejects).
+      // Turnstile script not loaded yet (or blocked). Don't silently no-op —
+      // tell the visitor to try again rather than submitting a token-less request.
       pendingData = null;
-      await doPost(data);
+      setBusy(false);
+      flashNote('<strong>Security check still loading.</strong> Give it a second, then press Send again.');
     }
   });
 
@@ -63,9 +66,16 @@
       });
       const body = await res.json().catch(() => ({}));
       if (res.ok && body.ok) {
-        form.reset();
         if (window.turnstile) window.turnstile.reset('.cf-turnstile');
-        flashNote('<strong>Message sent.</strong> Thanks for writing. Stan will read it and reply if you left an email.');
+        form.reset();
+        if (successPanel) {
+          // Replace the form with a persistent confirmation so it can't read as "nothing happened".
+          form.hidden = true;
+          successPanel.hidden = false;
+          successPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          flashNote('<strong>Message sent.</strong> Thanks for writing. Stan will read it and reply if you left an email.');
+        }
       } else {
         if (window.turnstile) window.turnstile.reset('.cf-turnstile');
         if (body.error === 'captcha_failed' || body.error === 'missing_captcha') {
