@@ -18,16 +18,6 @@
   const submitBtn = form.querySelector('button[type="submit"]');
   const originalNoteHtml = note ? note.innerHTML : '';
 
-  // Render obfuscated email addresses (bots can't scrape them from source).
-  document.querySelectorAll('.js-email').forEach(el => {
-    const u = el.dataset.u, d = el.dataset.d;
-    if (!u || !d) return;
-    const a = document.createElement('a');
-    a.href = 'mailto:' + u + '@' + d;
-    a.textContent = u + '@' + d;
-    el.replaceWith(a);
-  });
-
   // Turnstile execute-on-submit: pendingData holds form values while we wait
   // for a fresh token from Cloudflare (avoids expired-token errors).
   let pendingData = null;
